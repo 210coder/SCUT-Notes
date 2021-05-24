@@ -421,6 +421,16 @@ struct ofp_header {
 
 ⑦同4
 
+补充：
+
+step1:建立连接(Switch registration)
+获取交换机特性（Features）信息
+step2：配置交换机过程
+step3:网络topo检测
+step4: Packet‐in事件（交换机接收）
+step5: 控制器配置流表（Flow‐Mod）
+step6: 交换机转发（Packet‐Out）
+
 
 
 ### OF-Config
@@ -543,7 +553,7 @@ NETCONF协议采用Client/Server结构。通过NETCONF，SDN控制器对网络�
 ![image-20210521114201819](https://lhc-note.oss-cn-guangzhou.aliyuncs.com/images/image-20210521114201819.png)
 
 **NETCONF操作层**
-
+对数据库信息的获取、配置、复制和删除等功能
 ![image-20210521114333898](https://lhc-note.oss-cn-guangzhou.aliyuncs.com/images/image-20210521114333898.png)
 
 
