@@ -424,11 +424,17 @@ struct ofp_header {
 补充：
 
 step1:建立连接(Switch registration)
+
 获取交换机特性（Features）信息
+
 step2：配置交换机过程
+
 step3:网络topo检测
+
 step4: Packet‐in事件（交换机接收）
+
 step5: 控制器配置流表（Flow‐Mod）
+
 step6: 交换机转发（Packet‐Out）
 
 
