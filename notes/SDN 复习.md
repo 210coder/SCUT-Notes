@@ -893,6 +893,8 @@ CRUD（增删改查）的操作不要体现在URI中
 
 ##### **vNetwork 及其组件**
 
+vNetwork的组件主要包括虚拟网络接口卡 vNIC 、vNetwork 标准交换机vSwitch 和 vNetwork 分布式交换机
+
 **虚拟网络接卡vNIC**
 
 每个虚拟机都可以配置一个或者多个虚拟网络接口卡vNIC，vNIC拥有独立的MAC地址以及一 个或多个IP地址，且遵守标准的以太网协议
