@@ -570,13 +570,25 @@ NETCONF协议采用Client/Server结构。通过NETCONF，SDN控制器对网络�
 
 描述了网络管理所涉及的配置数据：
 
+**
 <running/> 
 
 <candidate/> 
 
-<startup/>
+<startup/>**
+
 
 使用YANG语言进行建模
+YANG具有以下特点：
+
+层级树形结构
+
+可以直接映射到XML
+
+可读性好，易学习
+
+可复用、可扩展
+
 
 
 
