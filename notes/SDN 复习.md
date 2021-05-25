@@ -41,6 +41,8 @@ SDN（Software Defined Network）即软件定义网络，是一种网络设计�
 ### SDN 的基本架构
 
 #### **SDN 主流架构；**
+![image-20210520105921332](https://lhc-note.oss-cn-guangzhou.aliyuncs.com/images/image-20210520105921332.png)
+
 
 #### **ONF 定义的 SDN 基本架构（分层，架构图、内容）；**
 
@@ -48,9 +50,7 @@ SDN（Software Defined Network）即软件定义网络，是一种网络设计�
 
 标准化转发面。
 
-
-
-![image-20210520105921332](https://lhc-note.oss-cn-guangzhou.aliyuncs.com/images/image-20210520105921332.png)
+补充 看word图片！
 
 ### SDN 的核心思想
 
