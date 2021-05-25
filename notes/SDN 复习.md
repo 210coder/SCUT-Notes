@@ -13,6 +13,7 @@ SDN（Software Defined Network）即软件定义网络，是一种网络设计�
 
 
 #### **SDN 的特点（数控分离）；**
+SDN最重要的三个概念是：
 
 控制平面与数据平面分离
 
