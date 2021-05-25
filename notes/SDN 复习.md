@@ -1045,6 +1045,13 @@ Overlay主要技术路线颠覆了数据中心网络的建设模式，原有的�
 Vxlan 是由 Cisco、VMware、Broadcom 等厂家向IETF提出一项云计算环境下，大二层网络解决方案的一项草案，全称 Virtual eXtensible Local Area Network，即虚拟扩展本地网络。
 
 
+◆  VXLAN报文是在原始二层报文前面再封装一个新的报文，新的报文中和传统
+的以太网报文类似，拥有源目mac、源目ip等元组。
+
+◆ 当原始的二层报文来到vtep节点后会被封装上VXLAN包头（在VXLAN网络
+中把可以封装和解封装VXLAN报文的设备称为vtep，vtep可以是虚拟
+switch也可以是物理switch），打上VXLAN包头的报文到了目标的vtep后会
+将VXLAN包头解封装，并获取原始的二层报文。
 
 #### **VXLAN 的报文格式（封装与解封装，UDP header、VXLAN header）；**
 
