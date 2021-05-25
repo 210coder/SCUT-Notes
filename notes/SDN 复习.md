@@ -1058,6 +1058,7 @@ switch也可以是物理switch），打上VXLAN包头的报文到了目标的vte
 ![image-20210521185000662](https://lhc-note.oss-cn-guangzhou.aliyuncs.com/images/image-20210521185000662.png)
 
 
+VXLAN报文结构
 
 ![image-20210521185131499](https://lhc-note.oss-cn-guangzhou.aliyuncs.com/images/image-20210521185131499.png)
 
