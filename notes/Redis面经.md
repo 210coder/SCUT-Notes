@@ -41,7 +41,7 @@ set 类似于 Java 中的 HashSet
 
 - bitmap
  bitmap 存储的是连续的二进制数字（0 和 1），通过 bitmap, 只需要一个 bit 位来表示某个元素对应的值或者状态，key 就是对应元素本身 。我们知道 8 个 bit 可以组成一个 byte，所以 bitmap 本身会极大的节省储存空间。
-应用场景： 适合需要保存状态信息（比如是否签到、是否登录...）并需要进一步对这些信息进行分析的场景。比如用户签到情况、活跃用户情况、用户行为统计（比如是否点赞过某个视频）。
+ 应用场景： 适合需要保存状态信息（比如是否签到、是否登录...）并需要进一步对这些信息进行分析的场景。比如用户签到情况、活跃用户情况、用户行为统计（比如是否点赞过某个视频）。
 
 
 ## Redis 单线程模型
@@ -147,6 +147,9 @@ Redis 4.0 开始支持 RDB 和 AOF 的混合持久化, AOF 重写的时候就直
 - **消息队列** ：Redis 自带的 list 数据结构可以作为一个简单的队列使用。Redis5.0 中增加的 Stream 类型的数据结构更加适合用来做消息队列。它比较类似于 Kafka，有主题和消费组的概念，支持消息持久化以及 ACK 机制。 
 - **复杂业务场景** ：通过 Redis 以及 Redis 扩展（比如 Redisson）提供的数据结构，我们可以很方便地完成很多复杂的业务场景比如通过 bitmap 统计活跃用户、通过 sorted set 维护排行榜。
 
+
+## Redis分布式锁
+
 ## 分布式缓存常见的技术选型方案有哪些？
 分布式缓存的话，使用的比较多的主要是 Memcached 和 Redis。
 
@@ -173,7 +176,31 @@ Redis 4.0 开始支持 RDB 和 AOF 的混合持久化, AOF 重写的时候就直
 直接操作缓存能够承受的请求是远远大于直接访问数据库的，所以我们可以考虑把数据库中的部分数据转移到缓存中去，这样用户的一部分请求会直接到缓存这里而不用经过数据库。
 
 
-## 什么是缓存击穿、缓存穿透、缓存雪崩
+## 保证 Redis 缓存与数据库双写一致性？ 缓存一致性
+[链接](https://segmentfault.com/a/1190000039078249)
+
+- 先删除缓存，后更新数据库
+![在这里插入图片描述](https://img-blog.csdnimg.cn/474c3938769244b8bcf7f796227cbdd7.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_20,color_FFFFFF,t_70,g_se,x_16)
+就会产生数据库和 Redis 数据不一致
+解决办法 **延时双删的策略**
+![在这里插入图片描述](https://img-blog.csdnimg.cn/832d008749f14aaea7c9a43f45d54f71.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_20,color_FFFFFF,t_70,g_se,x_16)
+但是上述的保证事务提交完以后再进行删除缓存还有一个问题，就是如果你使用的是 Mysql 的读写分离的架构的话，那么其实主从同步之间也会有时间差。
+
+此时的解决办法就是如果是对 Redis 进行填充数据的查询数据库操作，那么就强制将其指向主库进行查询。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/fcea64f2bc734192982b8ea55a55ea99.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_20,color_FFFFFF,t_70,g_se,x_16)
+- 先更新数据库，后删除缓存
+这一种情况也会出现问题，比如更新数据库成功了，但是在删除缓存的阶段出错了没有删除成功，那么此时再读取缓存的时候每次都是错误的数据了。
+
+解决方案就是利用消息队列进行删除的补偿
+![在这里插入图片描述](https://img-blog.csdnimg.cn/2d4a99f33a024ba199a6be6aa6df22cc.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_20,color_FFFFFF,t_70,g_se,x_16)
+这个方案会有一个缺点就是会对**业务代码**造成大量的侵入，深深的耦合在一起，所以这时会有一个优化的方案，我们知道对 Mysql 数据库更新操作后再 binlog 日志中我们都能够找到相应的操作，那么我们可以**订阅 Mysql 数据库的 binlog 日志**对缓存进行操作。
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/3cb18a49f2df4357b791f298bed59664.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_17,color_FFFFFF,t_70,g_se,x_16)
+
+
+
+
+## 什么是缓存穿透、缓存击穿、缓存雪崩
 ### 缓存穿透
 大量请求的 key 根本不存在于缓存中，导致请求直接到了数据库上，根本没有经过缓存这一层。举个例子：某个黑客故意制造我们缓存中不存在的 key 发起大量请求，导致大量请求落到数据库。
 这个请求的数据可能也不在数据库中 
@@ -223,5 +250,5 @@ Redis 4.0 开始支持 RDB 和 AOF 的混合持久化, AOF 重写的时候就直
 - 将热key分散到不同的服务器中；
 - 使用二级缓存，即JVM本地缓存,减少Redis的读请求。
 
-## 缓存一致性 如何保证Redis缓存和数据库的一致性
+
 

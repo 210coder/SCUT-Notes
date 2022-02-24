@@ -48,13 +48,16 @@ LinkHashMap如何实现有序的：
 ## ArrayList的扩容机制
 ArrayList默认数组容量为10
 ArrayList初建数组是空数组
-当第一次add元素时，数组的容量设置为默认数组长度
+- 当第一次add元素时，数组的容量设置为默认数组长度
 
 - 之后再add元素时，计算数组的实际需要的最小容量（数组的实际长度+1）
-判断数组需要实际的最小容量和数组的容量（数组的长度）若数组实际需要的最小容量比数组的容量大
-调用grow(int mincapacity) 进行扩容
-- 将数组的容量 * 1.5 和实际需要的最小容量比较 取最大值作为扩容的容量
-- 若扩容的容量 和 数组默认的数组最大长度（Integer.MAX_VALUE - 8） 相比 扩容容量大
+	- 判断数组需要实际的最小容量和数组的容量（数组的长度）
+	- 若数组实际需要的最小容量比数组的容量大 
+	- 调用grow(int mincapacity) 进行扩容
+	
+- **扩容**
+	- 将数组的容量 * 1.5 和实际需要的最小容量比较（mincapacity） 取最大值**作为扩容的容量**
+	- 若扩容的容量 和 数组默认的数组最大长度（Integer.MAX_VALUE - 8）相比 扩容容量大 调用函数求出 **最后真正扩容的容量**
 		- 如果实际需要的最小容量 比  Integer.MAX_VALUE还要大 扩容的容量设为Integer.MAX_VALUE
 		- 如果实际需要的最小容量 比  Integer.MAX_VALUE还要小 扩容的容量设为实际需要的最小容量
 
@@ -86,19 +89,51 @@ HashMap 中，null 可以作为键，这样的键只有一个，可以有一个�
 
 JDK1.8 以后的 HashMap 在解决哈希冲突时有了较大的变化，当链表长度大于阈值（默认为8）时，将链表转化为红黑树，以减少搜索时间。Hashtable 没有这样的机制。
 
+## HashMap 多线程操作导致死循环问题
+多线程下，进行 put 操作会导致 HashMap 死循环，原因在于 HashMap 的扩容 resize()方法。由于扩容是新建一个数组，复制原数据到数组。由于数组下标挂有链表，所以需要复制链表，但是多线程操作有可能导致环形链表，主要原因在于并发下的 Rehash 会造成元素之间会形成一个循环链表。不过，jdk 1.8 后解决了这个问题，但是还是不建议在多线程下使用 HashMap,因为多线程下使用 HashMap 还是会存在其他问题比如数据丢失。并发环境下推荐使用 ConcurrentHashMap 。
+
+**死循环**
+
+- 举个例子 比如 A ->B->null 的链表  扩容时由于需要重新Rehash 
+- 线程1 在扩容时 取出B采用头插法 B->A->null
+
+- 线程2也在扩容 会复制链表 A ->B->null 由于线程1已经让B->next = A   所以就会产生循环链表 A->B->A
+
+
+
+1.7链表元素采用的是头插法，会出现死循环，数据丢失，1.8改成尾插法, 尾插法解决了死循环的问题 但是多线程下还存在数据覆盖的问题 所以HashMap是线程不安全的，需要使用ConcurrentHashMap。
+
+**数据覆盖**
+
+- 线程1添加一个key-value 比如C 就会有A->C-> ...'
+- 这个时候线程2 也在添加一个key-value  比如 B 定位到原来的链表结尾同时是A  A->B 
+- 就会覆盖掉线程1的 C 值
+
+
+
+## HashMap的线程不安全主要体现在下面两个方面：
+- 在JDK1.7中，当并发执行扩容操作时会造成环形链和数据丢失的情况。
+- 在JDK1.8中，在并发执行put操作时会发生数据覆盖的情况。
+
+还没理解
+[具体看](https://blog.csdn.net/swpu_ocean/article/details/88917958?spm=1001.2101.3001.6650.1&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1.pc_relevant_aa&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1.pc_relevant_aa&utm_relevant_index=2)
+
+## HashMap 的长度为什么是 2 的幂次方
+hash函数根据key得到哈希值 hash 映射函数如何设计呢 第一个想到是取模%操作
+取余(%)操作中如果除数是 2 的幂次则等价于与其除数减一的与(&)操作（也就是说 hash%length==hash&(length-1)的前提是 length 是 2 的 n 次方；）。” 并且 采用二进制位操作 &，相对于%能够提高运算效率，这就解释了 HashMap 的长度为什么是 2 的幂次方
 
 ## 红黑树
-1）  红黑树节点要么是红节点、要么是黑节点；
+- 1）  红黑树节点要么是红节点、要么是黑节点；
 
-2）  根节点为黑节点；
+- 2）  根节点为黑节点；
 
-3）  叶节点（空节点）为黑节点；
+- 3）  叶节点（空节点）为黑节点；
 
-4）  每个红节点的两个子节点是黑节点；
+- 4）  每个红节点的两个子节点是黑节点；
 
-5）  对于每个节点，从该节点到其叶子点的所有路径上包含相同数目的黑节点。
+- 5）  对于每个节点，从该节点到其叶子点的所有路径上包含相同数目的黑节点。
 
-6）最长路径不超过最短路径的两倍
+最长路径不超过最短路径的两倍
 
 左旋：根节点变为左节点 右节点变为根节点
 
@@ -123,28 +158,15 @@ Java为数据结构中的映射定义了一个接口java.util.Map，此接口主
 
 下面针对各个实现类的特点做一些说明：
 
-- **(1) HashMap**：它根据键的hashCode值存储数据，大多数情况下可以直接定位到它的值，因而具有很快的访问速度，但遍历顺序却是不确定的。 HashMap继承AbstractMap，最多只允许一条记录的键为null，允许多条记录的值为null。HashMap非线程安全，即任一时刻可以有多个线程同时写HashMap，可能会导致数据的不一致。如果需要满足线程安全，可以用 Collections的synchronized Map方法使HashMap具有线程安全的能力，或者使用ConcurrentHashMap。
-
+- **(1) HashMap**：它根据键的hashCode值存储数据，大多数情况下可以直接定位到它的值，因而具有很快的访问速度，但遍历顺序却是不确定的。 HashMap继承 AbstractMap ，最多只允许一条记录的键为null，允许多条记录的值为null。HashMap非线程安全，即任一时刻可以有多个线程同时写HashMap，可能会导致数据的不一致。如果需要满足线程安全，可以用 Collections的synchronized Map方法使HashMap具有线程安全的能力，或者使用ConcurrentHashMap。
 - **(2) Hashtable**：Hashtable是遗留类，很多映射的常用功能与HashMap类似，不同的是它承自Dictionary类，不允许键值中一个为null，并且是线程安全的，任一时间只有一个线程能写Hashtable，并发性不如ConcurrentHashMap，因为ConcurrentHashMap引入了分段锁。Hashtable不建议在新代码中使用，不需要线程安全的场合可以用HashMap替换，需要线程安全的场合可以用ConcurrentHashMap替换。
-
 - **(3) LinkedHashMap**：LinkedHashMap是HashMap的一个子类，保存了记录的插入顺序，在用Iterator遍历LinkedHashMap时，先得到的记录肯定是先插入的，也可以在构造时带参数，按照访问次序排序。
-
 - **(4) TreeMap**：TreeMap实现SortedMap接口，能够把它保存的记录根据键排序，默认是按键值的升序排序，也可以指定排序的比较器，当用Iterator遍历TreeMap时，得到的记录是排过序的。如果使用排序的映射，建议使用TreeMap。在使用TreeMap时，key必须实现Comparable接口或者在构造TreeMap传入自定义的Comparator，否则会在运行时抛出java.lang.ClassCastException类型的异常。
 
 
-## hashCode()与 equals() 的相关规定：
-- 如果两个对象相等，则 hashcode 一定也是相同的
-- 两个对象相等,对两个 equals() 方法返回 true
-- 两个对象有相同的 hashcode 值，它们也不一定是相等的
-- 综上，equals() 方法被覆盖过，则 hashCode() 方法也必须被覆盖
-hashCode()的默认行为是对堆上的对象产生独特值。如果没有重写 hashCode()，则该 class 的两个对象无论如何都不会相等（即使这两个对象指向相同的数据）。
-
-## ==与 equals 的区别
-- 对于基本类型来说，== 比较的是值是否相等；
-- 对于引用类型来说，== 比较的是两个引用是否指向同一个对象地址（两者在内存中存放的地址（堆内存地址）是否指向同一个地方）；
-- 对于引用类型（包括包装类型）来说，equals 如果没有被重写，对比它们的地址是否相等；如果 equals()方法被重写（例如 String），则比较的是地址里的内容。
 
 ## ArrayDeque 与 LinkedList 的区别
+
 ArrayDeque 和 LinkedList 都实现了 Deque 接口，两者都具有队列的功能，但两者有什么区别呢？
 
 - ArrayDeque 是基于可变长的数组和双指针来实现，而 LinkedList 则通过链表来实现。
@@ -158,7 +180,9 @@ ArrayDeque 和 LinkedList 都实现了 Deque 接口，两者都具有队列的�
 从性能的角度上，选用 ArrayDeque 来实现队列要比 LinkedList 更好。此外，ArrayDeque 也可以用于实现栈。
 
 ## 讲讲PriorityQueue
-总是优先级最高的元素先出队。
+
+与 `Queue` 的区别在于元素出队顺序是与优先级相关的 总是优先级最高的元素先出队。
+
 - PriorityQueue 利用了二叉堆的数据结构来实现的，底层使用可变长的数组来存储数据
 - PriorityQueue 通过堆元素的上浮和下沉，实现了在 O(logn) 的时间复杂度内插入元素和删除堆顶元素。
 - PriorityQueue 是非线程安全的，且不支持存储 NULL 和 non-comparable 的对象。
@@ -173,3 +197,46 @@ PriorityQueue<Person> p = new PriorityQueue<Person>(new Comparator<Person>(
 	}
 ));
 ```
+
+
+
+###  ConcurrentHashMap 和 Hashtable 的区别
+
+主要体现在**实现线程安全的方式**上不同
+
+- 数据结构
+
+JDK1.7的 ConcurrentHashMap采用分段的数组(**`Segment` 数组和 `HashEntry` 数组**)+链表实现，JDK1.8和HashMap一样也是数组(Node数组)+链表 扩容时转化为红黑树
+
+HashTable采用的是数组+链表
+
+- 实现线程的安全方式
+
+JDK1.7的 ConcurrentHashMap采用分段锁，每把锁锁定容器里的一部分数据，多线程访问不同数据段的数据
+
+JDK1.8的ConcurrentHashMap并发控制使用 `synchronized` 和 CAS 来操作，`synchronized` 只锁定当前链表或红黑二叉树的首节点，这样只要 hash 不冲突，就不会产生并发。
+
+![JDK1.7的ConcurrentHashMap](https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-6/ConcurrentHashMap%E5%88%86%E6%AE%B5%E9%94%81.jpg)
+
+Hashtable使用 `synchronized` 来保证线程安全 ，全表锁锁住整个Hashtable，效率非常低下
+
+
+
+
+
+## ConcurrentHashMap 和 HashMap 的区别
+
+1：HashMap允许null值null键，而ConcurrentHashMap则不允许null值null键
+2：HashMap是非线程安全的，而ConcurrentHashMap是线程安全的
+3：HashMap和ConcurrentHashMap的底层都是数组+链表+红黑树
+
+ConcurrentHashMap JDK 1.7 使用的是Segment数组 + 链表的结构
+
+
+
+
+
+
+
+
+
