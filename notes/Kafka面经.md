@@ -409,6 +409,8 @@ Leader 选举
 
 和 redis 的区别
 
+
+
 ### 面试的时候可能有面试官喜欢问，
 
 redis 数据类型更丰富(string, hash, set ,zset, list)，etcd 仅仅就是 key-val。
