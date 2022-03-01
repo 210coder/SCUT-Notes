@@ -280,9 +280,12 @@ JDK1.6 对锁的实现引入了大量的优化，锁粗化、锁消除、锁升�
 两者都是可重入锁
 synchronized 依赖于 JVM 而 ReentrantLock 依赖于 API
 ReentrantLock 比 synchronized 增加了一些高级功能
+
 - 等待可中断 : ReentrantLock提供了一种能够中断等待锁的线程的机制，通过 lock.lockInterruptibly() 来实现这个机制。也就是说正在等待的线程可以选择放弃等待，改为处理其他事情。
 - 可实现公平锁 : ReentrantLock可以指定是公平锁还是非公平锁。而synchronized只能是非公平锁。所谓的公平锁就是先等待的线程先获得锁。ReentrantLock默认情况是非公平的，可以通过 ReentrantLock类的ReentrantLock(boolean fair)构造方法来制定是否是公平的。
 - 可实现选择性通知（锁可以绑定多个条件）: synchronized关键字与wait()和notify()/notifyAll()方法相结合可以实现等待/通知机制。ReentrantLock类当然也可以实现，但是需要借助于Condition接口与newCondition()方法。
+
+
 
 # 说说volatile关键字
 
@@ -411,7 +414,7 @@ http://www.hollischuang.com/archives/2509
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/4a3ab14b980b474e8984cb269acd3b7d.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_20,color_FFFFFF,t_70,g_se,x_16)
 
 
-## 讲一下 JMM(Java 内存模型)
+## 讲一下 JMM(Java 内存模型 定义多线程 共享内存通信的模型)
 Java的多线程之间是通过共享内存进行通信的，而由于采用共享内存进行通信，在通信过程中会存在一系列如可见性、原子性、顺序性等问题，而JMM就是围绕着多线程通信以及与其相关的一系列特性而建立的模型。JMM定义了一些语法集，这些语法集映射到Java语言中就是volatile、synchronized等关键字。
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/18b0f23012134f3ab3ad1fb86c57aa50.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_14,color_FFFFFF,t_70,g_se,x_16)
 

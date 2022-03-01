@@ -25,6 +25,7 @@
 #### Map
 一般就是数组+链表  HashMap的话链表长度大于8  就会转化为红黑树
 有Tree的比如TreeMap就是红黑树
+
 - `HashMap`： **JDK1.8 之前 `HashMap` 由数组+链表组成的，数组是 `HashMap` 的主体，链表则是主要为了解决哈希冲突而存在的（“拉链法”解决冲突）。JDK1.8 以后在解决哈希冲突时有了较大的变化，当链表长度大于阈值（默认为 8）（将链表转换成红黑树前会判断，如果当前数组的长度小于 64，那么会选择先进行数组扩容，而不是转换为红黑树）时，将链表转化为红黑树，以减少搜索时间**
 - `LinkedHashMap`： `LinkedHashMap` 继承自 `HashMap`，所以它的底层仍然是基于拉链式散列结构即由数组和链表或红黑树组成。另外，`LinkedHashMap` 在上面结构的基础上，增加了一条双向链表，使得上面的结构可以保持键值对的插入顺序。同时通过对链表进行相应的操作，实现了访问顺序相关逻辑。
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/eee42043e7b14fa8b4d2fdc7ce92a3b0.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_19,color_FFFFFF,t_70,g_se,x_16)
@@ -114,9 +115,7 @@ JDK1.8 以后的 HashMap 在解决哈希冲突时有了较大的变化，当链�
 ## HashMap的线程不安全主要体现在下面两个方面：
 - 在JDK1.7中，当并发执行扩容操作时会造成环形链和数据丢失的情况。
 - 在JDK1.8中，在并发执行put操作时会发生数据覆盖的情况。
-
-还没理解
-[具体看](https://blog.csdn.net/swpu_ocean/article/details/88917958?spm=1001.2101.3001.6650.1&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1.pc_relevant_aa&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1.pc_relevant_aa&utm_relevant_index=2)
+- [具体看](https://blog.csdn.net/swpu_ocean/article/details/88917958?spm=1001.2101.3001.6650.1&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1.pc_relevant_aa&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1.pc_relevant_aa&utm_relevant_index=2)
 
 ## HashMap 的长度为什么是 2 的幂次方
 hash函数根据key得到哈希值 hash 映射函数如何设计呢 第一个想到是取模%操作
