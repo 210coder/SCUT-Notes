@@ -403,9 +403,9 @@ Leader 选举
 
 ***\*项目基本思路\*******\*me\****
 
-将日志收集文件路径 服务器集群ip 端口写在配置里面
+将日志收集文件路径 服务器集群ip 端口写在etcd 里面
 
-通过etcd 
+通过etcd watch监控键值的变化 去实现动态服务发现
 
 和 redis 的区别
 
@@ -420,4 +420,30 @@ etcd 的底层是 Raft 算法，可以保证数据的强一致性。而 redis �
 读写性能上，因为 etcd 保证强一致性，所以会比 redis 差。
 
 存储方面，etcd 使用的是持久化存储boltdb，而 redis 的方案是可持久化的 aof/rdb
+
+
+
+
+
+## ETCD优势 VS Zookeeper
+
+etcd可实现的功能，Zookeeper都能实现，那么为什么要用etcd而非直接使用Zookeeper呢？相较之下，Zookeeper有如下缺点：
+
+1.复杂。Zookeeper的部署维护复杂，管理员需要掌握一系列的知识和技能；而Paxos强一致性算法也是素来以复杂难懂而闻名于世；另外，Zookeeper的使用也比较复杂，需要安装客户端，官方只提供了java和C两种语言的接口。
+
+2.Java编写。这里不是对Java有偏见，而是Java本身就偏向于重型应用，它会引入大量的依赖。而运维人员则普遍希望机器集群尽可能简单，维护起来也不易出错。
+
+3.发展缓慢。Apache基金会项目特有的[“Apache Way”](https://link.jianshu.com?t=http://www.infoworld.com/article/2612082/open-source-software/has-apache-lost-its-way-.html)在开源界饱受争议，其中一大原因就是由于基金会庞大的结构以及松散的管理导致项目发展缓慢。
+
+而etcd作为一个后起之秀，其优点也很明显。
+
+1.简单。使用Go语言编写部署简单；使用HTTP作为接口使用简单；使用Raft算法保证强一致性让用户易于理解。
+
+2.数据持久化。etcd默认数据一更新就进行持久化。
+
+3.安全。etcd支持SSL客户端安全认证。
+
+最后，etcd作为一个年轻的项目，正在高速迭代和开发中，这既是一个优点，也是一个缺点。优点在于它的未来具有无限的可能性，缺点是版本的迭代导致其使用的可靠性无法保证，无法得到大项目长时间使用的检验。然而，目前CoreOS、Kubernetes和Cloudfoundry等知名项目均在生产环境中使用了etcd，所以总的来说，etcd值得你去尝试。
+
+
 
