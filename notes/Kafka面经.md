@@ -251,15 +251,15 @@ kafka如何做到发送端和接收端的顺序一致性？
 
 而且为了进行这两次拷贝，中间还发生了好几次上下文切换，一会儿是应用程序在执行，一会儿上下文切换到操作系统来执行。所以这种方式来读取数据是比较消耗性能的。
 
-***\*Kafka 为了解决这个问题，在读数据的时候是引入零拷贝技术。\**** 
+**Kafka 为了解决这个问题，在读数据的时候是引入零拷贝技术。**
 
-也就是说，直接让操作系统的 cache 中的数据发送到***\*网卡\****后传输给下游的消费者，***\*中间跳过了两次拷贝数据的步骤\****，Socket 缓存中仅仅会拷贝一个描述符过去，不会拷贝数据到 Socket 缓存，如下图所示：
+也就是说，直接让操作系统的 cache 中的数据发送到**网卡**后传输给下游的消费者，**中间跳过了两次拷贝数据的步骤**，Socket 缓存中仅仅会拷贝一个描述符过去，不会拷贝数据到 Socket 缓存，如下图所示：
 
 ![img](file:///C:\Users\Xiangzi\AppData\Local\Temp\ksohtml\wps9171.tmp.jpg) 
 
-通过***\*零拷贝技术\****，就不需要把 os cache 里的数据拷贝到应用缓存，再从应用缓存拷贝到 Socket 缓存了，两次拷贝都省略了，所以叫做零拷贝。
+通过**零拷贝技术**，就不需要把 os cache 里的数据拷贝到应用缓存，再从应用缓存拷贝到 Socket 缓存了，两次拷贝都省略了，所以叫做零拷贝。
 
-对 Socket 缓存仅仅就是拷贝数据的描述符过去，然后数据就直接从 os cache 中发送到网卡上去了，***\*这个过程大大的提升了数据消费时读取文件数据的性能\****。 
+对 Socket 缓存仅仅就是拷贝数据的描述符过去，然后数据就直接从 os cache 中发送到网卡上去了，**这个过程大大的提升了数据消费时读取文件数据的性能**。 
 
 Kafka 从磁盘读数据的时候，会先看看 os cache 内存中是否有，如果有的话，其实读数据都是直接读内存的。 
 
@@ -267,7 +267,7 @@ kafka 集群经过良好的调优，数据直接写入 os cache 中，然后读�
 
  
 
-***\*kafka 消费支持几种消费模式\*******\*？\****
+**kafka 消费支持几种消费模式?**
 
  最多/最少/恰好消费一次
 
@@ -281,7 +281,7 @@ kafka 默认的模式是 at least once ，但这种模式可能会产生重复�
 
 在业务场景保存数据时使用了 INSERT INTO ...ON DUPLICATE KEY UPDATE语法，不存在时插入，存在时更新，是天然支持幂等性的。
 
-***\*kafka 如何保证数据的不重复和不丢失？\**** 
+**kafka 如何保证数据的不重复和不丢失？**
 
 exactly once 模式 精确传递一次。将 offset 作为唯一 id 与消息同时处理，并且保证处理的原子性。消息只会处理一次，不丢失也不会重复。但这种方式很难做到。 
 
@@ -289,7 +289,7 @@ kafka 默认的模式是 at least once ，但这种模式可能会产生重复�
 
 使用 exactly Once + 幂等操作，可以保证数据不重复，不丢失。
 
-***\*kafka 是如何清理过期数据的？\****
+**kafka 是如何清理过期数据的？**
 
 kafka 将数据持久化到了硬盘上，允许你配置一定的策略对数据清理，清理的策略有两个，删除和压缩。
 
@@ -401,9 +401,9 @@ Leader 选举
 
  
 
-***\*项目基本思路\*******\*me\****
+**项目基本思路**
 
-将日志收集文件路径 服务器集群ip 端口写在etcd 里面
+将日志收集文件路径  写在etcd 里面
 
 通过etcd watch监控键值的变化 去实现动态服务发现
 
@@ -420,8 +420,6 @@ etcd 的底层是 Raft 算法，可以保证数据的强一致性。而 redis �
 读写性能上，因为 etcd 保证强一致性，所以会比 redis 差。
 
 存储方面，etcd 使用的是持久化存储boltdb，而 redis 的方案是可持久化的 aof/rdb
-
-
 
 
 
@@ -444,6 +442,78 @@ etcd可实现的功能，Zookeeper都能实现，那么为什么要用etcd而非
 3.安全。etcd支持SSL客户端安全认证。
 
 最后，etcd作为一个年轻的项目，正在高速迭代和开发中，这既是一个优点，也是一个缺点。优点在于它的未来具有无限的可能性，缺点是版本的迭代导致其使用的可靠性无法保证，无法得到大项目长时间使用的检验。然而，目前CoreOS、Kubernetes和Cloudfoundry等知名项目均在生产环境中使用了etcd，所以总的来说，etcd值得你去尝试。
+
+
+
+## ETCD实现强一致性
+
+**线性一致性写：**
+
+所有的写操作，都要经过leader节点，一旦leader被选举成功，就可以对客户端提供服务了。客户端提交每一条命令都会按顺序记录到leader地日志中，然后向其他节点并行发送复制命令，大多数节点复制成功后，leader就会执行命令并且将执行结果返回客户端。raft保证已经提交地命令最终也会被其他节点成功执行（状态机）。因为日志是顺序记录的，并且有严格的确认机制，所以可以认为写是满足线性一致性的。
+
+由于在Raft算法中，写操作成功仅仅意味着日志达成了一致（已经落盘），而不能确保当前状态机已经apply了日志。状态机apply日志的行为在大多数Raft算法的实现中都是异步的，所以此时读取状态机并不能准确反应数据的状态，很可能会读到过期数据。
+
+**线性一致读：**
+
+ReadIndex算法：
+
+每次读操作的时候记录此时集群的committed index，当状态机的apply index大于等于committed index时才读取数据并返回。由于此时状态机已经把读请求发起时的已提交日志进行了apply日志，所以此时状态机的状态就可以反应读请求发起时的状态，符合线性一致性读的要求。
+
+大致的流程如下：
+
+1. 如果follower收到读请求，先从Leader获取集群最新的committed index
+2. Leader收到ReadIndex请求，会向Follower节点发送心跳确认，一半以上节点确认Leader身份后，才能将committed index返回给请求节点
+3. follower节点会等待直到apply index >= committed index时，处理读请求
+
+
+
+## etcd通过Raft算法实现强一致性
+
+[link](https://zhuanlan.zhihu.com/p/32052223)
+
+还可以参考下面的
+
+http://dockone.io/article/2434665
+
+raft工作原理:
+
+​	Raft开始时在集群中选举出Leader负责日志复制的管理，Leader接受来自客户端的事务请求（日志），并将它们复制给集群的其他节点，然后负责通知集群中其他节点提交日志，Leader负责保证其他节点与他的日志同步，当Leader宕掉后集群其他节点会发起选举选出新的Leader；
+
+**Raft将系统中的角色分为领导者（Leader）、跟从者（Follower）和候选者**（Candidate）。
+
+- **Leader**：接受客户端请求，并向Follower同步请求日志，当日志同步到大多数节点上后告诉Follower提交日志。有且仅有一个leader节点，如果leader宕机，通过选举机制选出新的leader；
+- **Follower**：接受并持久化Leader同步的日志，在Leader告之日志可以提交之后，提交日志，通过安全性的准则来保证保证整个日志复制的强一致性。
+- **Candidate**：Leader选举过程中的临时角色。
+
+Raft将一致性拆分为几个关键元素：
+
+- **Leader选举**
+
+​	Raft 使用心跳（heartbeat）触发Leader选举。当服务器启动时，初始化为Follower。Leader向所有Followers周期性发送heartbeat。如果Follower在选举超时时间内没有收到Leader的heartbeat，就会等待一段随机的时间后发起一次Leader选举。Follower将其当前term加一然后转换为Candidate。它首先给自己投票并且给集群中的其他服务器发送 RequestVote RPC。
+
+​	选举出Leader后，Leader通过定期向所有Followers发送心跳信息维持其统治。若Follower一段时间未收到Leader的心跳则认为Leader可能已经挂了，再次发起Leader选举过程。Raft保证选举出的Leader上一定具有最新的已提交的日志
+
+- 日志复制
+
+​	1. Leader选出后，就开始接收客户端的请求。Leader把请求作为日志条目（Log entries）加入到它的日志中，然后并行的**向其他服务器**发起 AppendEntries RPC复制日志条目。当这条日志被复制到**大多数**服务器上，Leader将这条日志应用到它的状态机并向客户端返回执行结果。
+
+​	2. 某些Followers可能没有成功的复制日志，Leader会无限的重试 AppendEntries RPC直到所有的Followers最终存储了所有的日志条目。
+
+​	3. Leader通过强制Followers复制它的日志来处理日志的不一致，Followers上的不一致的日志会被Leader的日志覆盖。
+
+​	4. Leader为了使Followers的日志同自己的一致，Leader需要找到**Followers同它的日志一致**的地方，然后**覆盖Followers在该位置之后的条目**。
+
+- 安全性
+
+Raft增加了如下两条限制以保证安全性：
+
+- 拥有最新的已提交的log entry的Follower才有资格成为Leader。
+
+这个保证是在RequestVote RPC中做的，Candidate在发送RequestVote RPC时，要带上自己的最后一条日志的term和log index，其他节点收到消息时，如果发现自己的日志比请求中携带的更新，则拒绝投票。日志比较的原则是，如果本地的最后一条log entry的term更大，则term大的更新，如果term一样大，则log index更大的更新。
+
+- Leader只能推进commit index来提交当前term的已经复制到大多数服务器上的日志，旧term日志的提交要等到提交当前term的日志来间接提交。
+
+
 
 
 
