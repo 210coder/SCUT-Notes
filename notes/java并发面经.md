@@ -375,6 +375,26 @@ Thread 类中有一个 threadLocals 和 一个 inheritableThreadLocals 变量，
 ## 如何创建线程池 看不懂
 
 
+
+## 线程池的参数和含义
+
+https://mdnice.com/writing/3c078a2e14bc4412afdd126ed61abc86
+
+使用 ThreadPoolExecutor 创建线程池时所设置的 7 个参数
+
+这 7 个参数分别是：
+
+1. corePoolSize：核心线程数。
+2. maximumPoolSize：最大线程数。
+3. keepAliveTime：空闲线程存活时间。
+4. TimeUnit：时间单位。
+5. BlockingQueue：线程池任务队列。
+6. ThreadFactory：创建线程的工厂。
+7. RejectedExecutionHandler：拒绝策略。
+
+
+
+
 # 乐观锁和悲观锁
 
 **悲观锁**

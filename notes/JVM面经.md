@@ -1,14 +1,12 @@
 Java内存模型
 
-![img](https://javaguide.cn/assets/img/Java%E8%BF%90%E8%A1%8C%E6%97%B6%E6%95%B0%E6%8D%AE%E5%8C%BA%E5%9F%9FJDK1.8.266f8487.png)
-
-
+![image-20220310152741343](JVM面经/image-20220310152741343.png)
 
 **线程私有的：**
 
 - 程序计数器
 - 虚拟机栈
-- 本地方法栈
+- 本地方法栈（native方法）
 
 **线程共享的：**
 
@@ -18,7 +16,34 @@ Java内存模型
 
 
 
+## Java中创建对象都做了什么事情
 
+Person p = new Person("zhangsan",20);
+
+该句话都做了什么事情？
+
+1，因为new用到了Person.class.所以会先找到Person.class文件并加载到内存中。
+
+2，执行该类中的static代码块，如果有的话，给Person.class类进行初始化。
+
+3，在堆内存中开辟空间，分配内存地址。
+
+4，在堆内存中建立对象的特有属性。并进行默认初始化。
+
+5，对属性进行显示初始化。
+
+6，对对象进行构造代码块初始化。
+
+7，对对象进行对应的构造函数初始化。
+
+8，将内存地址付给栈内存中的p变量
+
+Java中创建对象的内存图
+![Java中创建对象的内存图_内存地址_02](https://s7.51cto.com/images/blog/202109/28/48c1739b5732f675fc01403e0144707f.png?x-oss-process=image/watermark,size_16,text_QDUxQ1RP5Y2a5a6i,color_FFFFFF,t_100,g_se,x_10,y_10,shadow_90,type_ZmFuZ3poZW5naGVpdGk=)
+
+
+
+![Java中创建对象的内存图_.net_03](https://s5.51cto.com/images/blog/202109/28/fc992e9d315ba1e02940e2772df7dc42.png?x-oss-process=image/watermark,size_16,text_QDUxQ1RP5Y2a5a6i,color_FFFFFF,t_100,g_se,x_10,y_10,shadow_90,type_ZmFuZ3poZW5naGVpdGk=)
 
 
 
@@ -81,8 +106,6 @@ Java内存模型
 1. 该类的所有的实例对象都已被 GC，也就是说堆不存在该类的实例对象。
 2. 该类没有在其他任何地方被引用
 3. 该类的类加载器的实例已被 GC
-
-
 
 
 

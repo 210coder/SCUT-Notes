@@ -16,7 +16,7 @@ https://gitbook.cn/books/5ae1e77197c22f130e67ec4e/index.html
 
 
 
-**日志收集系统模块功能**
+**日志收集系统模块功能 **没有做的计划
 
 Agent模块:
 
@@ -38,13 +38,13 @@ Analysis模块：
 
 Kafka集群 + Zookeeper集群 +ES 日志收集系统 日志收集项目
 
-由agent和transfer两个模块组成，采用***\*生产者-消费者模式\****，实现对业务日志的实时收集与存储。
+由agent和transfer两个模块组成，采用**生产者-消费者模式**，实现对业务日志的实时收集与存储。
 
 使用Kafka作为消息队列暂存日志数据，对各业务线的日志数据进行聚合并进行长期监控 
 
 agent模块实时读取日志文件发送至Kafka；transfer模块异步地从Kafka读取日志数据，使用ElasticSearch进行持久化存储 
 
-使用etcd管理日志收集任务的配置信息，实时更新agent和transfer模块，实现***\*热加载\****
+使用etcd管理日志收集任务的配置信息，实时更新agent和transfer模块，实现**热加载**
 
 
 
@@ -175,7 +175,9 @@ Kafka 是最初由 Linkedin 公司开发，是一个分布式、支持分区的�
 
 Kafka 每秒可以处理几十万条消息，它的延迟最低只有几毫秒。每个 topic 可以分多个 Partition，Consumer Group 对 Partition 进行消费操作，提高负载均衡能力和消费能力。
 
- 
+
+
+
 
 1. 可扩展性
 
@@ -191,7 +193,7 @@ kafka 集群支持热扩展
 
  
 
-\4. 高并发
+4. 高并发
 
 支持数干个客户端同时读写
 
@@ -338,7 +340,7 @@ kafka为用户设置了三种可靠性级别，通过acks参数设定：
 
 - **leader选举**
 
-在每个分区的leader都会维护一个ISR（in-sync replicas）列表，ISR里面就是follower在broker的编号，只有跟得上leader的follower副本才能加入到ISR列表，只有这个列表里面的follower才能被选举为leader，所以在leader挂了的时候，并且unclean.leader.election.enable=false(关闭不完全的leader选举)的情况下，会从ISR列表中选取第一个follower作为新的leader，来保证消息的高可靠性。
+在每个分区的leader都会维护一个ISR（in-sync replicas 已同步的副本）列表，ISR里面就是follower在broker的编号，只有跟得上leader的follower副本才能加入到ISR列表，只有这个列表里面的follower才能被选举为leader，所以在leader挂了的时候，并且unclean.leader.election.enable=false(关闭不完全的leader选举)的情况下，会从ISR列表中选取第一个follower作为新的leader，来保证消息的高可靠性。
 
 
 
@@ -348,6 +350,65 @@ topic 级别：设置 replication.factor>=3，并且 min.insync.replicas>=2；
 producer 级别：acks=all（或者 request.required.acks=-1），同时发生模式为同步 producer.type=sync
 
 broker 级别：关闭不完全的 Leader 选举，即 unclean.leader.election.enable=false；
+
+
+
+
+[参考](https://cloud.tencent.com/developer/article/1790732)
+
+由于Kafka集群依赖zookeeper集群，所以最简单最直观的方案是，所有Follower 
+
+都在ZooKeeper上设置一个Watch，一旦Leader宕机，其对应的ephemeral znode
+
+会自动删除，此时所有Follower都尝试创建该节点，而创建成功者 
+
+(ZooKeeper保证只有一个能创建成功)即是新的Leader，其它Replica即为 Follower。
+
+
+
+## 选举算法
+
+Zab(zookeeper使用)
+
+Raft 
+
+启动时在集群中指定一些机器为Candidate，然后Candidate开始向其他机器(尤其是Follower)拉票，当某个Candidate的票数超过半数，它就成为leader。
+
+
+
+## Kafka Leader选举
+
+所谓控制器就是一个Broker，在一个kafka集群中，有多个broker节点，但是它们之间需要选举出一个leader，其他的broker充当follower角色。集群中第一个启动的broker会通过在zookeeper中创建**临时节点/controller**来让自己成为控制器，其他broker启动时也会在zookeeper中创建临时节点，但是发现节点已经存在，所以它们会收到一个异常，意识到控制器已经存在，那么就会在zookeeper中**创建watch对象，便于它们收到控制器变更的通知**。
+
+那么如果控制器由于网络原因与zookeeper断开连接或者异常退出，那么**其他broker通过watch收到控制器变更的通知，就会去尝试创建临时节点/controller**，如果有一个broker创建成功，那么其他broker就会收到创建异常通知，也就意味着集群中已经有了控制器，其他broker只需创建watch对象即可。
+
+如果集群中有一个broker发生异常退出了，那么控制器就会检查这个broker是否有分区的副本leader，如果有那么这个分区就需要一个新的leader，此时控制器就会去遍历其他副本，决定哪一个成为新的leader，同时更新分区的ISR集合。
+
+如果有一个broker加入集群中，那么控制器就会通过Broker ID去判断新加入的broker中是否含有现有分区的副本，如果有，就会从分区副本中去同步数据。
+————————————————
+版权声明：本文为CSDN博主「不清不慎」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/qq_37142346/article/details/91349100
+
+
+
+## Kafka Partition选主机制
+
+**3.1 优势**
+
+Kafka的Leader Election方案解决了上述问题，它在所有broker中选出一个controller，所有Partition的Leader选举都由controller决定。 controller会将Leader的改变直接通过RPC的方式(比ZooKeeper Queue的方式更高效)通知需为此作为响应的Broker。
+
+没有使用 zk，所以无 2.3 问题；也没有注册 watch无 2.2 问题 leader 失败了，就通过 controller 继续重新选举即可，所以克服所有问题。
+
+**3.2 Kafka集群controller的选举**
+
+每个Broker都会在Controller Path (/controller)上注册一个Watch。 当前 Controller失败时，对应的Controller Path会自动消失(因为它是ephemeral Node)，此时该Watch被fire，所有“活” 着的Broker都会去竞选成为新的 Controller (创建新的Controller Path)，但是只会有一个竞选成功(这点由 Zookeeper保证)。竞选成功者即为新的Leader，竞选失败者则重新在新的 Controller Path上注册Watch。因为Zookeeper的Watch是一次性的， 被fire一次 之后即失效，所以需要重新注册。
+
+**3.3 Kafka partition leader的选举**
+
+由controller执行: 
+
+- 从Zookeeper中读取当前分区的所有ISR(in-sync replicas)集合
+- 调用配置的分区选择算法选择分区的leader
 
 
 
