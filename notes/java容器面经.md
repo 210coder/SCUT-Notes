@@ -1,4 +1,4 @@
-﻿## 集合大体框架图
+## 集合大体框架图
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/6aadb04079ba4f5c9de69f034fddd877.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_20,color_FFFFFF,t_70,g_se,x_16)
 ## 集合的数据结构底层实现
 
@@ -60,6 +60,90 @@ ArrayList初建数组是空数组
 
 
 
+## HashMap的扩容
+
+[link](https://blog.csdn.net/lkforce/article/details/89521318)
+
+HashMap构造函数的一些参数：
+
+![image-20220314100423231](java容器面经/image-20220314100423231.png)
+
+1. Node[] table的**初始化长度length(默认值是16)**，**Load factor为负载因子(默认值是0.75)**
+
+2. threshold是HashMap所能容纳的最大数据量的Node(键值对)个数。**threshold = length * Load factor**
+
+3. 在数组定义好长度之后，负载因子越大，所能容纳的键值对个数越多。
+
+4. 在JDK1.8版本， 当**链表长度太长（默认超过8）时，链表就转换为红黑树**，利用红黑树快速增删改查的特点提高HashMap的性能。
+
+
+
+记住这个
+
+**Hash算法**：
+
+- **取key的hashCode值**
+
+- **高位运算**
+
+- **取模运算**
+
+![image-20220314105045334](java容器面经/image-20220314105045334.png)
+
+知识：
+
+通过hashCode()的**高16位异或**低16位实现的：(h = k.hashCode()) ^ (h >>> 16)，主要是从速度、功效、质量来考虑的，这么做可以在数组table的length比较小的时候，也能保证考虑到高低Bit都参与到Hash的计算中，同时不会有太大的开销。
+
+通过h & (table.length -1)来得到该对象的保存位，而HashMap底层数组的长度总是2的n次方，这是HashMap在速度上的优化。当length总是2的n次方时，h& (length-1)运算等价于对length取模，也就是h%length，但是&比%具有更高的效率。
+
+
+
+记住这个
+
+**扩容：**
+
+扩容 当put(key,value)时，刚开始table为空或长度为0 或者 ++size 大于threshold时，需要扩容
+
+table在第一次往HashMap中put元素的时候初始化。
+
+如果HashMap初始化的时候没有指定容量，那么初始化table的时候会使用默认的**DEFAULT_INITIAL_CAPACITY**参数，也就是16，作为table初始化时的长度。
+
+如果HashMap初始化的时候指定了容量，HashMap会把这个容量修改为2的倍数，然后创建对应长度的table。
+
+指定容量时，修改容量方法的函数：可以将容量修改为2的倍数
+
+![image-20220314104049130](java容器面经/image-20220314104049130.png)
+
+**JDK1.7下的扩容机制**
+
+如果原有table长度已经达到了上限，就不再扩容了。
+
+如果还未达到上限，则创建一个新的table，并调用transfer方法：
+
+transfer方法的作用是把原table的Node放到新的table中，使用的是**头插法**，也就是说，
+
+新table中链表的顺序和旧列表中是相反的，在HashMap线程不安全的情况下，这种头插法可能会导致**环状节点**。
+
+
+
+就是按照链表的顺序一个个计算新数组的index 复制过去 采用头插法
+
+**JDK1.8下的扩容机制**
+
+正常情况下，计算节点在table中的下标的方法是：hash&(oldTable.length-1)，扩容之后，table长度翻倍，计算table下标的方法是hash&(newTable.length-1)，也就是hash&(oldTable.length*2-1)，于是我们有了这样的结论：这新旧两次计算下标的结果，要不然就相同，要不然就是新下标等于旧下标加上旧数组的长度。
+
+
+
+计算新数组下标，在扩充HashMap的时候，**不需要像JDK1.7的实现那样重新计算hash**，只需要看看原来的hash值新增（"高位"）的那个bit是1还是0就好了，是0的话索引没变，是1的话索引变成“原索引+oldCap”。
+
+![image-20220314112545437](java容器面经/image-20220314112545437.png)
+
+
+
+**省去了重新计算hash值的时间**，看hash&oldCap == 0？
+
+
+
 ## HashTable和HashMap区别
 
 - **1.继承的父类不同**
@@ -88,6 +172,10 @@ HashMap 中，null 可以作为键，这样的键只有一个，可以有一个�
 
 JDK1.8 以后的 HashMap 在解决哈希冲突时有了较大的变化，当链表长度大于阈值（默认为8）时，将链表转化为红黑树，以减少搜索时间。Hashtable 没有这样的机制。
 
+
+
+
+
 ## HashMap 多线程操作导致死循环问题
 多线程下，进行 put 操作会导致 HashMap 死循环，原因在于 HashMap 的扩容 resize()方法。由于扩容是新建一个数组，复制原数据到数组。由于数组下标挂有链表，所以需要复制链表，但是多线程操作有可能导致环形链表，主要原因在于并发下的 Rehash 会造成元素之间会形成一个循环链表。不过，jdk 1.8 后解决了这个问题，但是还是不建议在多线程下使用 HashMap,因为多线程下使用 HashMap 还是会存在其他问题比如数据丢失。并发环境下推荐使用 ConcurrentHashMap 。
 
@@ -96,7 +184,7 @@ JDK1.8 以后的 HashMap 在解决哈希冲突时有了较大的变化，当链�
 - 举个例子 比如 A ->B->null 的链表  扩容时由于需要重新Rehash 
 - 线程1 在扩容时 取出B采用头插法 B->A->null
 
-- 线程2也在扩容 会复制链表 A ->B->null 由于线程1已经让B->next = A   所以就会产生循环链表 A->B->A
+- 线程2也在扩容 会**复制链表 A ->B->null** 由于线程1已经让B->next = A   所以就会产生循环链表 A->B->A
 
 
 
@@ -135,6 +223,8 @@ hash函数根据key得到哈希值 hash 映射函数如何设计呢 第一个想
 左旋：根节点变为左节点 右节点变为根节点
 
 
+
+
 ## HashMap 和 HashSet区别
 **往set 和map两种数据结构去比较**
 
@@ -148,6 +238,8 @@ hash函数根据key得到哈希值 hash 映射函数如何设计呢 第一个想
 | HashMap使用键（Key）计算Hashcode | HashSet使用成员对象来计算hashcode值，对于两个对象来说hashcode可能相同，所以equals()方法用来判断对象的相等性， |
 
 **TreeMap、TreeSet以及JDK1.8之后的HashMap底层都用到了红黑树。红黑树就是为了解决二叉查找树的缺陷，因为二叉查找树在某些情况下会退化成一个线性结构。**
+
+
 
 ## Map的一些介绍
 
