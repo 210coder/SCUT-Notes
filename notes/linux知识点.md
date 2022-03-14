@@ -28,4 +28,35 @@
 
 - netstat -nap | grep port
 
-6
+
+
+**cat 查找日志**
+
+cat -n test.log |grep "debug" 得到关键日志的行号
+
+
+
+head -n 10 test.log  查询日志文件中的头10行日志;
+
+head -n -10 test.log  查询日志文件除了最后10行的其他所有日志
+
+
+
+tail -n 10 test.log  查询日志尾部最后10行的日志;
+
+tail -n +10 test.log  查询10行之后的所有日志
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
