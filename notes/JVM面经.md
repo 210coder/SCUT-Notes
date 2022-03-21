@@ -245,15 +245,11 @@ Serial 收集器的多线程版本, 新生代采用标记-复制法，老年代�
 
 Parallel Scavenge 收集器也是使用标记-复制算法的多线程收集器, **这是 JDK1.8 默认收集器**
 
-
-
 4. **Serial Old 收集器**
 
 5. **Parallel Old 收集器**
 
 **Parallel Scavenge 收集器的老年代版本**。使用多线程和“标记-整理”算法。在注重吞吐量以及 CPU 资源的场合，都可以优先考虑 Parallel Scavenge 收集器和 Parallel Old 收集器。
-
-
 
 6. **CMS 收集器**
 

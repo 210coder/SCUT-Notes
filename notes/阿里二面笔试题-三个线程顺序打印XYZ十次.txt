@@ -1,0 +1,447 @@
+第一种方法 volatile关键字
+
+public class Solution {
+
+    private static volatile Integer Count = 0;
+
+    private static volatile Integer a = 0;
+
+    public static void main(String[] args) {
+        Thread one = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    if (a == 0) {
+                        System.out.print("X");
+                        a = 1;
+                    }
+                    try {
+                        TimeUnit.SECONDS.sleep(1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        });
+
+        Thread two = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    if (a == 1) {
+                        System.out.print("Y");
+                        a = 2;
+                    }
+                    try {
+                        TimeUnit.SECONDS.sleep(1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        });
+
+        Thread three = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                while (true) {
+                    if (a == 2) {
+                        System.out.println("Z");
+                        a = 0;
+                        Count++;
+                        if(Count == 10) {
+                            System.exit(0);
+                        }
+                    }
+                    try {
+                        TimeUnit.SECONDS.sleep(1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    
+                }
+            }
+
+            
+
+        });
+
+        one.start();
+        two.start();
+        three.start();
+    }
+}
+
+
+第二种方法 使用synchronized
+package com;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+/**
+ * 本题目主要考察线程间通信问题： 
+ * 题目描述：使用三个线程，一个线程打印 X，一个线程打印 Y，一个线程打印 Z，按顺序打印X，Y，Z，连续打印10次XYZ。
+ *
+ * @Author wsc
+ * 2021-09-13 21:23
+ **/
+public class Solution {
+    //定义一把lock锁对象
+    static Object lock = new Object();
+
+    // 线程执行标记
+    static int flag = 1;
+
+    public static void printX() throws InterruptedException {
+        synchronized (lock){
+            while(flag != 1){
+                lock.wait();
+            }
+            flag = 2;
+            System.out.print("X");
+            lock.notifyAll();
+        }
+    }
+
+    public static void printY() throws InterruptedException {
+        synchronized (lock){
+            while(flag != 2){
+                lock.wait();
+            }
+            flag = 3;
+            System.out.print("Y");
+            lock.notifyAll();
+        }
+    }
+
+    public static void printZ() throws InterruptedException {
+        synchronized (lock){
+            while(flag != 3){
+                lock.wait();
+            }
+            flag = 1;
+            System.out.println("Z");
+            lock.notifyAll();
+        }
+    }
+
+    public static void main(String[] args) {
+        //X线程
+        Thread x = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+
+                for (int i = 0; i < 10; i++) {
+                    try {
+                        printX();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        System.out.println("X 现在不能打印");
+                    }
+                }
+
+            }
+        });
+
+        //Y线程
+        Thread y = new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                for (int i = 0; i < 10; i++) {
+                    try {
+                        printY();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+        });
+
+        //Z线程
+        Thread z = new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                for (int i = 0; i < 10; i++) {
+                    try {
+                        printZ();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+        });
+        x.start();
+        y.start();
+        z.start();
+    }
+}
+
+第三种方法 ReetrantLock 
+可以参考这个
+https://blog.csdn.net/qq_36326332/article/details/120276147
+
+package com.shuchang;
+
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+/**
+ * 本题目主要考察线程间通信问题：
+ * 题目描述：使用三个线程，一个线程打印 X，一个线程打印 Y，一个线程打印 Z，按顺序打印X，Y，Z，连续打印10次XYZ。
+ *
+ * @Author wsc
+ * 2021-09-13 21:23
+ **/
+public class PrintXYZ1 {
+    //定义一把lock锁对象
+    static Lock lock = new ReentrantLock();
+
+    //使用lock锁获取三个Condition条件
+    static Condition con1 = lock.newCondition();
+    static Condition con2 = lock.newCondition();
+    static Condition con3 = lock.newCondition();
+
+    // 线程执行标记
+    static int flag = 1;
+
+    public static void printX() throws InterruptedException {
+        lock.lock();
+        while (flag != 1) {
+            con1.await();
+        }
+        flag = 2;
+        System.out.print("X");
+        con2.signal();
+        lock.unlock();
+    }
+
+    public static void printY() throws InterruptedException {
+        lock.lock();
+        while (flag != 2) {
+            con2.await();
+        }
+        flag = 3;
+        System.out.print("Y");
+        con3.signal();
+        lock.unlock();
+    }
+
+    public static void printZ() throws InterruptedException {
+        lock.lock();
+        while (flag != 3) {
+            con3.await();
+        }
+        flag = 1;
+        System.out.println("Z");
+        con1.signal();
+        lock.unlock();
+    }
+
+    public static void main(String[] args) {
+        //X线程
+        Thread x = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    for (int i = 0; i < 10; i++) {
+                        printX();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //Y线程
+        Thread y = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    for (int i = 0; i < 10; i++) {
+                        printY();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //Z线程
+        Thread z = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    for (int i = 0; i < 10; i++) {
+                        printZ();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        x.start();
+        y.start();
+        z.start();
+    }
+}
+
+
+第四种方法
+线程间同步的
+
+CountDownLatch
+await()等待CountDownLatch值变为1 否则阻塞
+countDown将CountDownLatch值减1
+
+https://blog.csdn.net/qq_36326332/article/details/120276147
+
+package com.shuchang;
+
+import java.util.concurrent.CountDownLatch;
+
+/**
+ * 本题目主要考察线程间通信问题：
+ * 题目描述：使用三个线程，一个线程打印 X，一个线程打印 Y，一个线程打印 Z，按顺序打印X，Y，Z，连续打印10次XYZ。
+ * @Author wsc
+ * 2021-09-13 21:23
+ **/
+public class PrintXYZ2 {
+    //定义CountDownLatch，起到线程通知的作用
+    private static CountDownLatch cdl1 = new CountDownLatch(1);
+    private static CountDownLatch cdl2 = new CountDownLatch(1);
+    private static CountDownLatch cdl3 = new CountDownLatch(1);
+
+    public static void main(String[] args) {
+        Thread x = new Thread(() -> {
+            try {
+                for (int i = 0; i < 10; i++) {
+                    //线程启动之后等待，直到con1的门闩变为0
+                    cdl1.await();
+                    System.out.print("X");
+                    //将cdl2的门闩减为0，使cdl2可以从等待返回
+                    cdl2.countDown();
+                    //新建一个CountDownLatch用于下一次循环
+                    cdl1 = new CountDownLatch(1);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        },"printX");
+
+        Thread y = new Thread(() -> {
+            try {
+                for (int i = 0; i < 10; i++) {
+                    cdl2.await();
+                    System.out.print("Y");
+                    cdl3.countDown();
+                    cdl2 = new CountDownLatch(1);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        },"printY");
+
+        Thread z = new Thread(() -> {
+            try {
+                for (int i = 0; i < 10; i++) {
+                    cdl3.await();
+                    System.out.println("Z");
+                    cdl1.countDown();
+                    cdl3 = new CountDownLatch(1);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        },"printZ");
+        x.start();
+        y.start();
+        z.start();
+        //三个线程启动完都会等待各自的门闩
+        //cdl1门闩先减为0，意味着线程printX会先从等待中返回，从而先打印X
+        cdl1.countDown();
+    }
+}
+
+
+第五种方法
+Sepmore 信号量
+
+import java.util.concurrent.Semaphore;
+
+public class Solution {
+
+    // 以A开始的信号量,初始信号量数量为1
+    private static Semaphore A = new Semaphore(1);
+    // B、C信号量,A完成后开始,初始信号数量为0
+    private static Semaphore B = new Semaphore(0);
+    private static Semaphore C = new Semaphore(0);
+
+    static class ThreadA extends Thread {
+
+        @Override
+        public void run() {
+            try {
+                for (int i = 0; i < 10; i++) {
+                    A.acquire();// A获取信号执行,A信号量减1,当A为0时将无法继续获得该信号量
+                    System.out.print("A");
+                    B.release();// B释放信号，B信号量加1（初始为0），此时可以获取B信号量
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    static class ThreadB extends Thread {
+
+        @Override
+        public void run() {
+            try {
+                for (int i = 0; i < 10; i++) {
+                    B.acquire();
+                    System.out.print("B");
+                    C.release();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    static class ThreadC extends Thread {
+
+        @Override
+        public void run() {
+            try {
+                for (int i = 0; i < 10; i++) {
+                    C.acquire();
+                    System.out.println("C");
+                    A.release();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        new ThreadA().start();
+        new ThreadB().start();
+        new ThreadC().start();
+    }
+}
+
+
+创建线程的三种方式
+https://zhuanlan.zhihu.com/p/82339746

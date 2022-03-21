@@ -8,14 +8,19 @@
 
 [link](https://www.cnblogs.com/zhou-test/p/9811771.html)
 
+https://cloud.tencent.com/developer/article/1038547
+
  在JDK1.5之前，创建线程就只有两种方式，即继承java.lang.Thread类和实现java.lang.Runnable接口；而在JDK1.5以后，增加了两个创建线程的方式，即实现java.util.concurrent.Callable接口和线程池
 
-1.实现Runnable接口，并重写run方法
-2.继承Thread类并重写run方法（Java不支持多继承）
+1. 定义一个类继承Thread类并重写run方法（Java不支持多继承）
+
+2.定义一个类实现Runnable接口，并重写run方法
 
 3.实现Callable接口，并重写call方法
 
 3.使用线程池去创建
+
+
 
 ## Runnable接口和Callable接口的区别：
 Runnable自 Java 1.0 以来一直存在，但Callable仅在 Java 1.5 中引入,目的就是为了来处理Runnable不支持的用例。Runnable 接口 不会返回结果或抛出检查异常，但是 Callable 接口 可以。所以，如果任务不需要返回结果或抛出异常推荐使用 Runnable 接口 ，这样代码看起来会更加简洁。
@@ -274,8 +279,6 @@ JDK1.6 对锁的实现引入了大量的优化，锁粗化、锁消除、锁升�
 
 
 
-
-
 ## 谈谈 synchronized 和 ReentrantLock 的区别
 两者都是可重入锁
 synchronized 依赖于 JVM 而 ReentrantLock 依赖于 API
@@ -284,6 +287,50 @@ ReentrantLock 比 synchronized 增加了一些高级功能
 - 等待可中断 : ReentrantLock提供了一种能够中断等待锁的线程的机制，通过 lock.lockInterruptibly() 来实现这个机制。也就是说正在等待的线程可以选择放弃等待，改为处理其他事情。
 - 可实现公平锁 : ReentrantLock可以指定是公平锁还是非公平锁。而synchronized只能是非公平锁。所谓的公平锁就是先等待的线程先获得锁。ReentrantLock默认情况是非公平的，可以通过 ReentrantLock类的ReentrantLock(boolean fair)构造方法来制定是否是公平的。
 - 可实现选择性通知（锁可以绑定多个条件）: synchronized关键字与wait()和notify()/notifyAll()方法相结合可以实现等待/通知机制。ReentrantLock类当然也可以实现，但是需要借助于Condition接口与newCondition()方法。
+
+![image-20220321104734730](java并发面经/image-20220321104734730.png)
+
+记住这个：
+
+ReentrantLock是依赖AQS的，提供等待可中断，实现公平锁和非公平锁（默认），可选择性通知。
+
+
+
+ReentrantLock加锁解锁时API层核心方法的映射关系
+
+![img](https://p0.meituan.net/travelcube/f30c631c8ebbf820d3e8fcb6eee3c0ef18748.png)
+
+
+
+## 并发编程之AQS
+
+https://www.cnblogs.com/waterystone/p/4920797.html
+
+https://tech.meituan.com/2019/12/05/aqs-theory-and-apply.html
+
+
+
+某个线程获取锁失败的后续流程是什么呢？
+
+A：存在某种排队等候机制,通过addWaiter添加到等待队列中，线程继续等待，仍然保留获取锁的可能，获取锁流程仍在继续。
+
+Q：既然说到了排队等候机制，那么就一定会有某种队列形成，这样的队列是什么数据结构呢？
+
+A：是CLH变体的FIFO双端队列。Craig、Landin and Hagersten队列
+
+Q：处于排队等候机制中的线程，什么时候可以有机会获取锁呢？
+
+A：可以详细看下2.3.1.3小节。
+
+Q：如果处于排队等候机制中的线程一直无法获取锁，需要一直等待么？还是有别的策略来解决这一问题？
+
+A：**线程所在节点的状态会变成取消状态**，取消状态的节点会从队列中释放，具体可见2.3.2小节。
+
+Q：Lock函数通过Acquire方法进行加锁，但是具体是如何加锁的呢？
+
+A：AQS的Acquire会调用tryAcquire方法，tryAcquire由各个自定义同步器实现，通过tryAcquire完成加锁过程。
+
+
 
 
 
@@ -374,15 +421,49 @@ Thread 类中有一个 threadLocals 和 一个 inheritableThreadLocals 变量，
 - **提高线程的可管理性**。线程是稀缺资源，如果无限制的创建，不仅会消耗系统资源，还会降低系统的稳定性，使用线程池可以进行统一的分配，调优和监控。 
 ## 如何创建线程池 看不懂
 
+https://www.cnblogs.com/dolphin0520/p/3932921.html
+
+java.util.concurrent.Executors提供了一个 java.util.concurrent.Executor接口的实现用于创建线程池
+
+ 一个线程池包括以下四个基本组成部分：
+        1、线程池管理器（ThreadPool）：用于创建并管理线程池，包括 创建线程池，销毁线程池，添加新任务；
+        2、工作线程（PoolWorker）：线程池中线程，在没有任务时处于等待状态，可以循环的执行任务；
+        3、任务接口（Task）：每个任务必须实现的接口，以供工作线程调度任务的执行，它主要规定了任务的入口，任务执行完后的收尾工作，任务的执行状态等；
+        4、任务队列（taskQueue）：用于存放没有处理的任务。提供一种缓冲机制。
+
+
+
+常见线程池
+
+①newSingleThreadExecutor
+
+创建一个单线程的线程池。
+
+②newFixedThreadExecutor(n)
+
+创建固定大小的线程池。
+
+③newCacheThreadExecutor（推荐使用）
+
+创建一个可缓存的线程池。
+
+④newScheduleThreadExecutor
+
+创建一个大小无限的线程池。
+
+
+
+通过上面的几个线程池的底层实现，我们可以发现底层都是通过 `ThreadPoolExecutor` 类来实现的，只是参数不一样
+
+可以自己直接调用ThreadPoolExecutor的构造函数来自己创建线程池。阿里java编程建议这样创建线程池。  
+
 
 
 ## 线程池的参数和含义
 
-https://mdnice.com/writing/3c078a2e14bc4412afdd126ed61abc86
+[使用 ThreadPoolExecutor 创建线程池时所设置的 7 个参数](https://mdnice.com/writing/3c078a2e14bc4412afdd126ed61abc86)
 
-使用 ThreadPoolExecutor 创建线程池时所设置的 7 个参数
-
-这 7 个参数分别是：
+**这 7 个参数分别是：**
 
 1. corePoolSize：核心线程数。
 2. maximumPoolSize：最大线程数。
@@ -391,6 +472,37 @@ https://mdnice.com/writing/3c078a2e14bc4412afdd126ed61abc86
 5. BlockingQueue：线程池任务队列。
 6. ThreadFactory：创建线程的工厂。
 7. RejectedExecutionHandler：拒绝策略。
+
+
+
+### BlockingQueue：线程池任务队列
+
+**阻塞队列：线程池存放任务的队列，用来存储线程池的所有待执行任务。** 它可以设置以下几个值：
+
+1. ArrayBlockingQueue：一个由数组结构组成的有界阻塞队列。
+2. LinkedBlockingQueue：一个由链表结构组成的有界阻塞队列。
+3. SynchronousQueue：一个不存储元素的阻塞队列，即直接提交给线程不保持它们。
+4. PriorityBlockingQueue：一个支持优先级排序的无界阻塞队列。
+5. DelayQueue：一个使用优先级队列实现的无界阻塞队列，只有在延迟期满时才能从中提取元素。
+6. LinkedTransferQueue：一个由链表结构组成的无界阻塞队列。与SynchronousQueue类似，还含有非阻塞方法。
+7. LinkedBlockingDeque：一个由链表结构组成的双向阻塞队列。
+
+比较常用的是 LinkedBlockingQueue，线程池的排队策略和 BlockingQueue 息息相关。
+
+
+
+###  RejectedExecutionHandler：拒绝策略
+
+**拒绝策略：当线程池的任务超出线程池队列可以存储的最大值之后，执行的策略。** 默认的拒绝策略有以下 4 种：
+
+- AbortPolicy：拒绝并抛出异常。
+- CallerRunsPolicy：使用当前调用的线程来执行此任务。
+- DiscardOldestPolicy：抛弃队列头部（最旧）的一个任务，并执行当前任务。
+- DiscardPolicy：忽略并抛弃当前任务。
+
+线程池的默认策略是 AbortPolicy 拒绝并抛出异常。
+
+
 
 
 
@@ -478,4 +590,14 @@ Java是一种面向对象的语言，而Java对象在JVM中的存储也是有一
 在执行时JIT会把翻译过的机器码保存起来，已备下次使用，因此从理论上来说，採用该JIT技术能够，能够接近曾经纯编译技术。 
 
 使用该技术，可以加速java程序的运行速度。 
+
+
+
+
+
+## 并发编程之AQS
+
+https://www.cnblogs.com/waterystone/p/4920797.html
+
+https://tech.meituan.com/2019/12/05/aqs-theory-and-apply.html
 
