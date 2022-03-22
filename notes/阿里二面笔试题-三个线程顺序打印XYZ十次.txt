@@ -301,7 +301,7 @@ public class PrintXYZ1 {
 线程间同步的
 
 CountDownLatch
-await()等待CountDownLatch值变为1 否则阻塞
+await()等待CountDownLatch值变为0 否则阻塞
 countDown将CountDownLatch值减1
 
 https://blog.csdn.net/qq_36326332/article/details/120276147

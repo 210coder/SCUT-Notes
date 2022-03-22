@@ -1,21 +1,119 @@
 数据库表语句
 
-**更改字段长度**
+## 更改字段长度
 ALTER TABLE 表名 MODIFY COLUMN 字段名  数据类型(修改后的长度)
 ALTER TABLE attence MODIFY COLUMN id INT(20)
 
-**修改字段的名称**
+## 修改字段的名称
 alter table <表名> change <字段名> <字段新名称> <字段的类型>。
 ALTER TABLE attence CHANGE attence_name NAME  VARCHAR(20)
 
-**新增默认为空的字段**
+## 新增默认为空的字段
 ALTER TABLE 表名 ADD COLUMN 字段名 字段类型 DEFAULT NULL;
-**新增不为空的字段**
+
+## 新增不为空的字段
 ALTER TABLE 表名 ADD COLUMN 字段名 字段类型  NOT NULL;
 
-**添加行 删除行**
+## 添加行 删除行
 ALTER TABLE mytable ADD col CHAR(20); 
 ALTER TABLE mytable DROP COLUMN col;
+
+
+
+## 添加索引
+
+https://blog.csdn.net/weixin_41811352/article/details/115463508
+
+https://www.cnblogs.com/bruce1992/p/13958166.html
+
+
+
+**建表的时候添加索引**
+
+```
+CREATE TABLE mytable(
+       ID INT NOT NULL primary key, 
+       username VARCHAR(16) NOT NULL, 
+       INDEX indexName(username)
+ );
+```
+
+
+
+**普通索引**
+
+Alter table tablename add index indexname(colunm)
+
+ALTER TABLE `table_name` ADD INDEX index_name ( `column` )
+
+**主键索引**
+
+ALTER TABLE `table_name` ADD PRIMARY KEY ( `column` )
+
+要先删除主键索引
+
+ALTER TABLE `table_name` DROP PRIMARY KEY;
+
+
+
+**唯一索引**
+
+AlTER TABLE `table_name` ADD UNIQUE  index_name ( `column` )
+
+
+
+**全文索引**
+
+ALTER TABLE `table_name` ADD FULLTEXT index_name ( `column`)
+
+
+
+**多列索引**
+
+ALTER TABLE `table_name` ADD INDEX index_name ( `column1`, `column2`, `column3` )
+
+
+
+上面的index_name 也可以不要
+
+unique index = unique
+
+fulltext index = fulltext
+
+后面的index可以不用
+
+
+
+比如
+
+AlTER TABLE `table_name` ADD UNIQUE index  index_name ( `column` )
+
+等于 
+
+AlTER TABLE `table_name` ADD UNIQUE ( `column` )
+
+
+
+**删除索引**
+
+ALTER TABLE `table_name` DROP INDEX name;
+
+DROP INDEX [indexName] ON mytable;
+
+
+
+**创建外键**
+
+https://blog.csdn.net/weixin_46649583/article/details/109236860
+
+创建方式一：创建表时加入外键
+
+FOREIGN KEY (`gradeid`) REFERENCES grade (`gradeid`)
+
+创建方式二：创建表后，再添加外键约束
+
+建立外键:ALTER TABLE 从表 ADD CONSTRAINT 约束名 FOREIGN KEY(外键的列名) REFERENCES 主表 (哪个字段);
+ALTER TABLE student ADD CONSTRAINT `FK_gradeid` FOREIGN KEY(`gradeid`) REFERENCES grade (`gradeid`);
 
 
 
@@ -32,6 +130,8 @@ GROUP BY col
 HAVING num >= 2;
 
 
+
+## 连接
 
 **内连接、 也叫等值连接  两张表拼接在一起**
 
@@ -61,7 +161,9 @@ WHERE department = (
       FROM employee
       WHERE name = "Jim");
 
-自连接版本：
+
+
+**自连接版本：**
 SELECT e1.name
 FROM employee AS e1 INNER JOIN employee AS e2
 ON e1.department = e2.department
@@ -106,9 +208,7 @@ ON Customers.cust_id = Orders.cust_id;
 
 
 
-
-
-排名函数
+**排名函数**
 
 1.rank() over：排名相同的两名是并列，但是占两个名次，1 1 3 4 4 6这种
 

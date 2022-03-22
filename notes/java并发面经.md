@@ -334,6 +334,20 @@ A：AQS的Acquire会调用tryAcquire方法，tryAcquire由各个自定义同步�
 
 
 
+## 有哪几种方式实现线程安全
+volatile
+
+互斥 同步
+synchronized
+ReetrantLock 
+
+无同步
+ThreadLocal 本地副本
+
+
+
+
+
 # 说说volatile关键字
 
 用以声明变量的值可能随时会别的线程修改，使用volatile修饰的变量会强制将修改的值立即写入主存，主存中值的更新会使缓存中的值失效(非volatile变量不具备这样的特性，非volatile变量的值会被缓存，线程A更新了这个值，线程B读取这个变量的值时可能读到的并不是是线程A更新后的值)。
@@ -391,6 +405,7 @@ boolean compareAndSwapLong(Object obj, long valueOffset, long expect, long updat
 JDK中的AtomicStampedReference类给每个变量都配备了一个时间戳，从而避免了ABA问题的产生。
 
 ## 讲一下ThreadLocal
+
 ThreadLocal是JDK包提供的，实现每一个线程都有自己的专属本地变量。
 如果你创建了一个ThreadLocal变量，那么访问这个变量的每个线程都会有这个变量的一个本地副本，当多个线程操作这个变量时，实际操作的是自己本地内存里面的变量，从而避免了线程安全的问题。
 
@@ -408,30 +423,41 @@ public class Thread implements Runnable {
     //......
 }
 ```
-Thread 类中有一个 threadLocals 和 一个 inheritableThreadLocals 变量，它们都是 ThreadLocalMap 类型的变量。默认情况下这两个变量都是 null，只有当前线程调用 ThreadLocal 类的 set或get方法时才创建它们，实际上调用这两个方法的时候，我们调用的是ThreadLocalMap类对应的 get()、set()方法。
+**Thread 类中有一个 threadLocals 和 一个 inheritableThreadLocals 变量，它们都是 ThreadLocalMap 类型的变量**。默认情况下这两个变量都是 null，只有当前线程调用 ThreadLocal 类的 set或get方法时才创建它们，实际上调用这两个方法的时候，我们调用的是ThreadLocalMap类对应的 get()、set()方法。
 
-其实每个线程的本地变量不是存放在ThreadLoal实例里面的，而是存放在调用线程的threadLocals变量里面的。ThreadLocals类型的本地变量是放到具体的线程内存空间的。ThreadLocals就是一个工具壳，它通过 set或get方法将线程的threadLocal变量存放或拿出来使用。（来自书本）
-
-## 为什么要用线程池？
-线程池提供了一种限制和管理资源（包括执行一个任务）。 每个线程池还维护一些基本统计信息，例如已完成任务的数量。 池化技术的思想主要是为了减少每次获取资源的消耗，提高对资源的利用率。
-
-这里借用《Java 并发编程的艺术》提到的来说一下使用线程池的好处： 
-- **降低资源消耗**。通过重复利用已创建的线程降低线程创建和销毁造成的消耗。 
-- **提高响应速度**。当任务到达时，任务可以不需要等到线程创建就能立即执行。 
-- **提高线程的可管理性**。线程是稀缺资源，如果无限制的创建，不仅会消耗系统资源，还会降低系统的稳定性，使用线程池可以进行统一的分配，调优和监控。 
-## 如何创建线程池 看不懂
-
-https://www.cnblogs.com/dolphin0520/p/3932921.html
-
-java.util.concurrent.Executors提供了一个 java.util.concurrent.Executor接口的实现用于创建线程池
-
- 一个线程池包括以下四个基本组成部分：
-        1、线程池管理器（ThreadPool）：用于创建并管理线程池，包括 创建线程池，销毁线程池，添加新任务；
-        2、工作线程（PoolWorker）：线程池中线程，在没有任务时处于等待状态，可以循环的执行任务；
-        3、任务接口（Task）：每个任务必须实现的接口，以供工作线程调度任务的执行，它主要规定了任务的入口，任务执行完后的收尾工作，任务的执行状态等；
-        4、任务队列（taskQueue）：用于存放没有处理的任务。提供一种缓冲机制。
+其实每个线程的本地变量不是存放在ThreadLoal实例里面的，而是存放在**调用线程的threadLocals变量里面的**。ThreadLocals类型的本地变量是放到具体的线程内存空间的。ThreadLocals就是一个工具壳，它通过 set把value值放到当前线程的threadLocal变量存放，或get方从当前线程的threadLocals变量拿出来使用。（来自书本）
 
 
+
+## 为什么要用线程池
+
+1. 在执行大量异步任务时，线程池能够提供较好的性能。
+
+   不使用线程池的话，每次执行异步任务都需要创建线程，而线程的创建和销毁是需要开销的，线程池的线程是可以复用的
+
+2. 线程池提供了一种限制和管理资源的手段，比如限制线程的个数，动态新增线程。
+
+3. 线程池也提供了许多可调的参数和可扩展的接口。例如好几种创建线程池的方法。
+
+
+
+## 线程池的五个状态如下：
+
+- RUNNING：接受新任务并处理阻塞队列里的任务。
+- SHUTDOWN：拒绝新任务但是处理阻塞队列里面的任务。
+- STOP：拒绝新任务并且抛弃阻塞队列里的任务，同时会中断正在处理的任务。
+- TIDYING：所有任务都执行完后当前线程池活动线程数为0，将要调用terminated方法（相当于一个过渡状态）。
+- TERMINATED： 终止状态，terminated方法调用完成后的状态。
+
+
+
+
+
+## 如何创建线程池 
+
+
+
+以下是Executors的工厂方法
 
 常见线程池
 
@@ -445,7 +471,7 @@ java.util.concurrent.Executors提供了一个 java.util.concurrent.Executor接�
 
 ③newCacheThreadExecutor（推荐使用）
 
-创建一个可缓存的线程池。
+创建一个可缓存的线程池，最大线程数为Integer.MAX_VALUE
 
 ④newScheduleThreadExecutor
 
@@ -465,17 +491,52 @@ java.util.concurrent.Executors提供了一个 java.util.concurrent.Executor接�
 
 **这 7 个参数分别是：**
 
-1. corePoolSize：核心线程数。
-2. maximumPoolSize：最大线程数。
-3. keepAliveTime：空闲线程存活时间。
-4. TimeUnit：时间单位。
-5. BlockingQueue：线程池任务队列。
+1. corePoolSize：核心线程数
+
+   通常情况下最多添加corePoolSize个Worker，当任务过多时（阻塞队列满了），会继续添加Worker直到Worker数达到maximumPoolSize
+
+2. maximumPoolSize：线程池的最大线程数。-
+
+3. keepAliveTime：空闲线程存活时间
+
+   如果当前线程池的线程数量比核心线程数多，且是闲置状态，则这些闲置的线程能存活的最大时间。
+
+4. TimeUnit：存活时间的时间单位。
+
+5. workQueue：用于保存等待执行的任务的阻塞队列、任务队列。
+
+   如基于数组的有界队列ArrayBlockingQueue
+
+   基于链表的无界队列LinkedBlockingQueue
+
+   最多只有一个元素的同步队列SynchronousQueue
+
+   优先级队列 PriorityBlockingQueue
+
+
+
 6. ThreadFactory：创建线程的工厂。
-7. RejectedExecutionHandler：拒绝策略。
+
+7. RejectedExecutionHandler：拒绝策略
+
+- AbortPolicy：拒绝并抛出异常
+- CallerRunsPolicy：使用当前调用的线程来执行此任务。
+- DiscardOldestPolicy：调用poll抛弃队列头部（最旧）的一个任务，并执行当前任务。
+- DiscardPolicy：忽略并抛弃当前任务
 
 
 
-### BlockingQueue：线程池任务队列
+## 任务调度
+
+1. 首先检测线程池运行状态，如果不是RUNNING，则直接拒绝，线程池要保证在RUNNING的状态下执行任务。
+2. 如果workerCount < corePoolSize，则创建并启动一个线程来执行新提交的任务。
+3. 如果workerCount >= corePoolSize，且线程池内的阻塞队列未满，则将任务添加到该阻塞队列中。
+4. 如果workerCount >= corePoolSize && workerCount < maximumPoolSize，且线程池内的阻塞队列已满，则创建并启动一个线程来执行新提交的任务。
+5. 如果workerCount >= maximumPoolSize，并且线程池内的阻塞队列已满, 则根据拒绝策略来处理该任务, 默认的处理方式是直接抛异常。
+
+
+
+### workQueue：线程池任务队列
 
 **阻塞队列：线程池存放任务的队列，用来存储线程池的所有待执行任务。** 它可以设置以下几个值：
 
@@ -503,6 +564,83 @@ java.util.concurrent.Executors提供了一个 java.util.concurrent.Executor接�
 线程池的默认策略是 AbortPolicy 拒绝并抛出异常。
 
 
+
+## 并发编程的线程同步器
+
+### CountDownLatch
+
+![img](https://github.com/210coder/java-concurrency-note/raw/master/images/14.png)
+
+日常开发中经常遇到一个线程需要等待一些线程都结束后才能继续向下运行的场景，在CountDownLatch出现之前通常使用join方法来实现。
+
+CountDownLatch用法：
+
+```
+CountDownLatch countDownLatch = new CountDownLatch(2);
+// 阻塞直到被interrupt或计数器递减至0
+countDownLatch.await();
+```
+
+CountDownLatch相对于join方法的优点大致有两点：
+
+- 调用一个子线程的join方法后，该线程会一直阻塞直到子线程运行完毕，而CountDownLatch允许子线程运行完毕或在运行过程中递减计数器，也就是说await方法不一定要等到子线程运行结束才返回。
+- 使用线程池来管理线程一般都是直接添加Runnable到线程池，这时就没有办法再调用线程的join方法了，而仍可在子线程中递减计数器，也就是说CountDownLatch相比join方法可以更灵活地控制线程的同步。
+
+CountDownLatch是基于AQS实现的
+
+主要用法：
+
+#### void await()
+
+当线程调用CountDownLatch的await方法后，当前线程会被阻塞，直到CountDownLatch的计数器值递减至0或者其他线程调用了当前线程的interrupt方法。
+
+#### void countDown()
+
+递减计数器，当计数器的值为0（即state=0）时会唤醒所有因调用await方法而被阻塞的线程。
+
+
+
+## CyclicBarrier 回环屏障
+
+CyclicBarrier是回环屏障的意思，它可以使一组线程全部达到一个状态后再全部同时执行，然后重置自身状态又可用于下一次的状态同步。
+
+线程调用await方法后就会被阻塞，这个阻塞点叫屏障点，等所有的线程都调用了await方法，线程们就会冲破屏障，继续向下运行。
+
+![image-20220322161323068](java并发面经/image-20220322161323068.png)
+
+## Semaphore
+
+Semaphore信号量也是一个同步器，与CountDownLatch和CyclicBarrier不同的是，它内部的计数器是递增的，并且在初始化时可以指定计数器的初始值（通常为0），但不必知道需要同步的线程个数，而是在**需要同步的地方调用acquire方法时指定需要同步的线程个数**。
+
+Semaphore还是使用AQS实现的，并且可以选取公平性策略（默认为非公平性的）。
+
+![img](https://github.com/210coder/java-concurrency-note/raw/master/images/16.png)
+
+用法：
+
+#### void acquire()
+
+表示当前线程希望获取一个信号量资源，如果当前信号量大于0，则当前信号量的计数减1，然后该方法直接返回。否则如果当前信号量等于0，则被阻塞。
+
+#### void acquire(int permits)
+
+可获取多个信号量。
+
+#### void release()
+
+使信号量加1，如果当前有线程因为调用acquire方法被阻塞而被放入AQS中的话，会根据公平性策略选择一个信号量个数能被满足的线程进行激活。
+
+#### void release(int permits)
+
+可增加多个信号量。
+
+
+
+## 并发编程之AQS
+
+https://www.cnblogs.com/waterystone/p/4920797.html
+
+https://tech.meituan.com/2019/12/05/aqs-theory-and-apply.html
 
 
 
@@ -592,12 +730,4 @@ Java是一种面向对象的语言，而Java对象在JVM中的存储也是有一
 使用该技术，可以加速java程序的运行速度。 
 
 
-
-
-
-## 并发编程之AQS
-
-https://www.cnblogs.com/waterystone/p/4920797.html
-
-https://tech.meituan.com/2019/12/05/aqs-theory-and-apply.html
 
