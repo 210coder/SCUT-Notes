@@ -16,6 +16,9 @@ ALTER TABLE 表名 ADD COLUMN 字段名 字段类型  NOT NULL;
 
 ## 添加行 删除行
 ALTER TABLE mytable ADD col CHAR(20); 
+
+可以有COLUMN 
+
 ALTER TABLE mytable DROP COLUMN col;
 
 

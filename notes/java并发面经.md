@@ -447,7 +447,7 @@ public class Thread implements Runnable {
 
 ## 线程池生命周期：
 
-`ctl`这个AtomicInteger类型，是对线程池的运行状态和线程池中有效线程的数量进行控制的一个字段， 它同时包含两部分的信息：线程池的运行状态 (runState) 和线程池内有效线程的数量 (workerCount)，高3位保存runState，低29位保存workerCount，两个变量之间互不干扰。
+`ctl`这个AtomicInteger类型，是对线程池的运行状态(五种线程状态)和线程池中有效线程的数量进行控制的一个字段， 它同时包含两部分的信息：线程池的运行状态 (runState) 和线程池内有效线程的数量 (workerCount)，高3位保存runState，低29位保存workerCount，两个变量之间互不干扰。
 
 
 
@@ -477,9 +477,7 @@ https://tech.meituan.com/2020/04/02/java-pooling-pratice-in-meituan.html
 2. 如果workerCount < corePoolSize，则创建并启动一个线程来执行新提交的任务。
 3. 如果workerCount >= corePoolSize，且线程池内的阻塞队列未满，则将任务添加到该阻塞队列中。
 4. 如果workerCount >= corePoolSize && workerCount < maximumPoolSize，且线程池内的阻塞队列已满，则创建并启动一个线程来执行新提交的任务。
-5. 如果workerCount >= maximumPoolSize，并且线程池内的阻塞队列已满, 则根据拒绝策略来处理该任务, 默认的处理方式是直接抛异常（四种拒绝）
-
-
+5. 如果workerCount >= maximumPoolSize，并且线程池内的阻塞队列已满, 则根据拒绝策略来处理该任务, 默认的处理方式是拒绝并抛出异常（四种拒绝）
 
 
 
@@ -493,7 +491,9 @@ https://tech.meituan.com/2020/04/02/java-pooling-pratice-in-meituan.html
 
 ②newFixedThreadExecutor(n)
 
-创建一个核心线程个数和最大线程个数都为n的线程池，阻塞队列长度为Integer.max_value, keepAliveTime = 0,表示线程个数比核心线程个数多并且当前空闲则回收, 阻塞队列为LinkedBlockingQueue。。
+固定大小的线程池
+
+创建一个核心线程个数和最大线程个数都为n的线程池，阻塞队列长度为Integer.max_value, keepAliveTime = 0,表示线程个数比核心线程个数多并且当前空闲则回收, 阻塞队列为LinkedBlockingQueue。
 
 ③newCacheThreadExecutor()
 
@@ -501,7 +501,11 @@ https://tech.meituan.com/2020/04/02/java-pooling-pratice-in-meituan.html
 
 ④newScheduleThreadExecutor（n）
 
-创建一个核心线程个数为n, 最大线程数为Integer.max_value, keepAliveTime = 0,  阻塞队列为DelayWorkQueue
+延时任务执行的线程池
+
+创建一个核心线程个数为n, 最大线程数为Integer.max_value, keepAliveTime = 0,  阻塞队列为DelayQueue
+
+
 
 
 
@@ -522,7 +526,7 @@ https://www.cnblogs.com/jinggod/p/8490223.html
 
 - 提交周期性的任务 
 
-`scheduleAtFixedRate()`（固定的周期时间） 
+`scheduleAtFixedRate()`（固定的周期时间）
 
  `scheduleWithFixedDelay()`(固定的间隔时间)
 
@@ -534,7 +538,7 @@ https://www.cnblogs.com/jinggod/p/8490223.html
 
 
 
-## 线程池的参数和含义
+## ThreadPoolExecutor 线程池的参数和含义
 
 [使用 ThreadPoolExecutor 创建线程池时所设置的 7 个参数](https://mdnice.com/writing/3c078a2e14bc4412afdd126ed61abc86)
 
@@ -542,7 +546,7 @@ https://www.cnblogs.com/jinggod/p/8490223.html
 
 1. corePoolSize：核心线程数
 
-   通常情况下最多添加corePoolSize个Worker，当任务过多时（阻塞队列满了），会继续添加Worker直到Worker数达到maximumPoolSize
+   通常情况下最多添加corePoolSize个Worker，当任务过多时添加到阻塞队列里，会继续添加Worker直到Worker数达到maximumPoolSize，超过maximumPoolSize实施拒绝策略。
 
 2. maximumPoolSize：线程池的最大线程数。-
 
@@ -568,16 +572,16 @@ https://www.cnblogs.com/jinggod/p/8490223.html
 
 7. RejectedExecutionHandler：拒绝策略
 
-- AbortPolicy：拒绝并抛出异常
-- CallerRunsPolicy：使用当前调用的线程来执行此任务。
-- DiscardOldestPolicy：调用poll抛弃队列头部（最旧）的一个任务，并执行当前任务。
-- DiscardPolicy：忽略并抛弃当前任务
+- AbortPolicy：丢弃任务并抛出异常。
+- DiscardPolicy：忽略并抛弃任务。
+- DiscardOldestPolicy：抛弃队列最前面的任务，然后重新提交被拒绝的任务。
+- CallerRunsPolicy：由调用线程（提交任务的线程）处理该任务
 
 
 
 
 
-### workQueue 线程池阻塞队列
+### workQueue 线程池 阻塞队列
 
 **阻塞队列：线程池存放任务的队列，用来存储线程池的所有待执行任务。** 它可以设置以下几个值：
 
@@ -590,11 +594,13 @@ LinkedBlockingDeque：一个由链表结构组成的双向阻塞队列。
 
 
 
-SynchronousQueue：一个不存储元素的阻塞队列，即直接提交给线程不保持它们，使用场景newCachedThreadPool()就使用了不储存元素的阻塞队列。
+SynchronousQueue：一个不存储元素的阻塞队列（同步队列），即直接提交给线程不保持它们，使用场景newCachedThreadPool()就使用了不储存元素的阻塞队列。
 
 PriorityBlockingQueue：一个支持优先级排序的无界阻塞队列。
 
-DelayQueue：一个使用优先级队列实现延迟获取的无界阻塞队列，只有在延迟期满时才能从中提取元素。
+DelayQueue：一个使用优先级队列实现，实现延迟获取的无界阻塞队列，只有在延迟期满时才能从中提取元素。
+
+
 
 ![image-20220323095629397](java并发面经/image-20220323095629397.png)
 
@@ -651,15 +657,11 @@ Worker是通过继承AQS，使用AQS来实现独占锁这个功能。
 
 
 
-
-
-
-
 ## 并发编程的线程同步器
 
 ### CountDownLatch
 
-![img](https://github.com/210coder/java-concurrency-note/raw/master/images/14.png)
+![image-20220323155027000](java并发面经/image-20220323155027000.png)
 
 日常开发中经常遇到一个线程需要等待一些线程都结束后才能继续向下运行的场景，在CountDownLatch出现之前通常使用join方法来实现。
 
@@ -698,15 +700,17 @@ CyclicBarrier是回环屏障的意思，它可以使一组线程全部达到一�
 
 线程调用await方法后就会被阻塞，这个阻塞点叫屏障点，等所有的线程都调用了await方法，线程们就会冲破屏障，继续向下运行。
 
+只能保证线程都执行完一个状态，不能保证这期间线程的顺序问题。
+
 ![image-20220322161323068](java并发面经/image-20220322161323068.png)
 
 ## Semaphore
 
-Semaphore信号量也是一个同步器，与CountDownLatch和CyclicBarrier不同的是，它内部的计数器是递增的，并且在初始化时可以指定计数器的初始值（通常为0），但不必知道需要同步的线程个数，而是在**需要同步的地方调用acquire方法时指定需要同步的线程个数**。
+Semaphore信号量也是一个同步器，与CountDownLatch和CyclicBarrier不同的是，**它内部的计数器是递增的**，并且在初始化时可以指定计数器的初始值（通常为0），但不必知道需要同步的线程个数，而是在**需要同步的地方调用acquire方法时指定需要同步的线程个数**。
 
 Semaphore还是使用AQS实现的，并且可以选取公平性策略（默认为非公平性的）。
 
-![img](https://github.com/210coder/java-concurrency-note/raw/master/images/16.png)
+![image-20220323155436807](java并发面经/image-20220323155436807.png)
 
 用法：
 
@@ -734,6 +738,8 @@ https://www.cnblogs.com/waterystone/p/4920797.html
 
 https://tech.meituan.com/2019/12/05/aqs-theory-and-apply.html
 
+还需要总结
+
 
 
 
@@ -752,8 +758,10 @@ https://tech.meituan.com/2019/12/05/aqs-theory-and-apply.html
 ### CAS与synchronized的使用情景
 
 > 简单的来说CAS适用**多读场景**，冲突一般较少
-> 
+>
 > synchronized适用**多写场景**，冲突一般较多。
+>
+> 
 
 # ConCurrentHashMap线程安全
 
@@ -761,11 +769,11 @@ https://tech.meituan.com/2019/12/05/aqs-theory-and-apply.html
 
 Hashtable 本身比较低效，因为它的实现基本就是将 put、get、size 等各种方法加上“synchronized”。简单来说，这就导致了所有并发操作都要竞争同一把锁，一个线程在进行同步操作时，其他线程只能等待，大大降低了并发操作的效率，比如线程使用了put操作，其他线程不能使用get操作。
 
-- 数据存储利用 volatile 来保证可见性。
-
+- 数据Entry存储key value利用 volatile 来保证可见性。
 - 使用 CAS 等操作，在特定场景进行无锁并发操作。
-
 - 使用 Unsafe、LongAdder 之类底层手段，进行极端情况的优化。
+
+
 
 ## JVM内存结构 VS Java内存模型 VS Java对象模型]
 http://www.hollischuang.com/archives/2509
