@@ -178,7 +178,7 @@ public class Singleton {
 }
 ```
 
-1. 由于构造函数私有，我们获取Singleton类的实例化对象只能通过Singleton.getUniqueInstance()的方式，而无法在外界通过new或者其他方法创建此类的实例，并且由于此成员变量被static修饰，使得实例对象属于类本身且只有唯一一个。
+1. 由于**构造函数私有**，我们获取Singleton类的实例化对象只能通过Singleton.getUniqueInstance()的方式，而无法在外界通过new或者其他方法创建此类的实例，并且由于此成员变量被static修饰，使得实例对象属于类本身且只有唯一一个。
 2. volatile关键字可以防止jvm指令重排
 > 因为 uniqueInstance = new Singleton() 这句话可以分为三步：
 1.为 singleton 分配内存空间；
@@ -334,6 +334,8 @@ A：AQS的Acquire会调用tryAcquire方法，tryAcquire由各个自定义同步�
 
 
 
+
+
 ## 有哪几种方式实现线程安全
 volatile
 
@@ -343,8 +345,6 @@ ReetrantLock
 
 无同步
 ThreadLocal 本地副本
-
-
 
 
 
@@ -377,6 +377,8 @@ volatile的一个重要作用就是和CAS结合，保证了原子性，详细的
 - **`volatile` 关键字能保证数据的可见性，但不能保证数据的原子性。`synchronized` 关键字两者都能保证。**
 - **`volatile`关键字主要用于解决变量在多个线程之间的可见性，而 `synchronized` 关键字解决的是多个线程之间访问资源的同步性。**
 
+
+
 ## Java中的CAS操作
 
 CAS即Compare And Swap，JDK中Unsafe类提供了一系列的compareAndSwap*方法。
@@ -403,6 +405,8 @@ boolean compareAndSwapLong(Object obj, long valueOffset, long expect, long updat
 #### 解决方案
 
 JDK中的AtomicStampedReference类给每个变量都配备了一个时间戳，从而避免了ABA问题的产生。
+
+
 
 ## 讲一下ThreadLocal
 
@@ -441,6 +445,12 @@ public class Thread implements Runnable {
 
 
 
+## 线程池生命周期：
+
+`ctl`这个AtomicInteger类型，是对线程池的运行状态和线程池中有效线程的数量进行控制的一个字段， 它同时包含两部分的信息：线程池的运行状态 (runState) 和线程池内有效线程的数量 (workerCount)，高3位保存runState，低29位保存workerCount，两个变量之间互不干扰。
+
+
+
 ## 线程池的五个状态如下：
 
 - RUNNING：接受新任务并处理阻塞队列里的任务。
@@ -449,33 +459,72 @@ public class Thread implements Runnable {
 - TIDYING：所有任务都执行完后当前线程池活动线程数为0，将要调用terminated方法（相当于一个过渡状态）。
 - TERMINATED： 终止状态，terminated方法调用完成后的状态。
 
+生命周期转换流程
+
+![图3 线程池生命周期](https://p0.meituan.net/travelcube/582d1606d57ff99aa0e5f8fc59c7819329028.png)****
+
+
+
+参考博客
+
+https://tech.meituan.com/2020/04/02/java-pooling-pratice-in-meituan.html
+
+## 任务调度
+
+​		所有任务的调度都是由execute方法完成的，这部分完成的工作是：检查现在线程池的运行状态、运行线程数、运行策略，决定接下来执行的流程，是直接申请线程执行，或是缓冲到队列中执行，亦或是直接拒绝该任务。其执行过程如下：
+
+1. 首先检测线程池运行状态，如果不是RUNNING，则直接拒绝，线程池要保证在RUNNING的状态下执行任务。
+2. 如果workerCount < corePoolSize，则创建并启动一个线程来执行新提交的任务。
+3. 如果workerCount >= corePoolSize，且线程池内的阻塞队列未满，则将任务添加到该阻塞队列中。
+4. 如果workerCount >= corePoolSize && workerCount < maximumPoolSize，且线程池内的阻塞队列已满，则创建并启动一个线程来执行新提交的任务。
+5. 如果workerCount >= maximumPoolSize，并且线程池内的阻塞队列已满, 则根据拒绝策略来处理该任务, 默认的处理方式是直接抛异常（四种拒绝）
 
 
 
 
-## 如何创建线程池 
 
-
-
-以下是Executors的工厂方法
+## 线程池的类型如下
 
 常见线程池
 
 ①newSingleThreadExecutor
 
-创建一个单线程的线程池。
+创建一个核心线程个数和最大线程个数都为1的线程池，阻塞队列长度为Integer.max_value, keepAliveTime = 0,表示线程个数比核心线程个数多并且当前空闲则回收, 阻塞队列为LinkedBlockingQueue。
 
 ②newFixedThreadExecutor(n)
 
-创建固定大小的线程池。
+创建一个核心线程个数和最大线程个数都为n的线程池，阻塞队列长度为Integer.max_value, keepAliveTime = 0,表示线程个数比核心线程个数多并且当前空闲则回收, 阻塞队列为LinkedBlockingQueue。。
 
-③newCacheThreadExecutor（推荐使用）
+③newCacheThreadExecutor()
 
-创建一个可缓存的线程池，最大线程数为Integer.MAX_VALUE
+创建一个按需创建线程的线程池,初始线程个数为0,即核心线程数为0，最大线程数为Integer.max_value, keepAliveTime = 60s,表示只有当前线程在60s内空闲则回收，阻塞队列为同步队列, 同步队列里面最多只有一个任务，加入同步队列的任务会被马上执行。
 
-④newScheduleThreadExecutor
+④newScheduleThreadExecutor（n）
 
-创建一个大小无限的线程池。
+创建一个核心线程个数为n, 最大线程数为Integer.max_value, keepAliveTime = 0,  阻塞队列为DelayWorkQueue
+
+
+
+**newScheduleThreadExecutor主要方法介绍：**
+
+https://www.cnblogs.com/jinggod/p/8490223.html
+
+- 零延时的 execute()、submit() 方法
+
+本质上调用的还是 schedule() 方法；从下面的源码可以看出，这两个方法提交的任务都是延时为0的 “实时任务”；
+
+- 提交一个延时任务的 schedule() 方法
+
+**`<V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit)：`**
+创建并执行在给定延迟后启用的 ScheduledFuture。
+**`ScheduledFuture<?> schedule(Runnable command, long delay,imeUnit unit)：`**
+创建并执行在给定延迟后启用的一次性操作。
+
+- 提交周期性的任务 
+
+`scheduleAtFixedRate()`（固定的周期时间） 
+
+ `scheduleWithFixedDelay()`(固定的间隔时间)
 
 
 
@@ -526,27 +575,30 @@ public class Thread implements Runnable {
 
 
 
-## 任务调度
-
-1. 首先检测线程池运行状态，如果不是RUNNING，则直接拒绝，线程池要保证在RUNNING的状态下执行任务。
-2. 如果workerCount < corePoolSize，则创建并启动一个线程来执行新提交的任务。
-3. 如果workerCount >= corePoolSize，且线程池内的阻塞队列未满，则将任务添加到该阻塞队列中。
-4. 如果workerCount >= corePoolSize && workerCount < maximumPoolSize，且线程池内的阻塞队列已满，则创建并启动一个线程来执行新提交的任务。
-5. 如果workerCount >= maximumPoolSize，并且线程池内的阻塞队列已满, 则根据拒绝策略来处理该任务, 默认的处理方式是直接抛异常。
 
 
-
-### workQueue：线程池任务队列
+### workQueue 线程池阻塞队列
 
 **阻塞队列：线程池存放任务的队列，用来存储线程池的所有待执行任务。** 它可以设置以下几个值：
 
-1. ArrayBlockingQueue：一个由数组结构组成的有界阻塞队列。
-2. LinkedBlockingQueue：一个由链表结构组成的有界阻塞队列。
-3. SynchronousQueue：一个不存储元素的阻塞队列，即直接提交给线程不保持它们。
-4. PriorityBlockingQueue：一个支持优先级排序的无界阻塞队列。
-5. DelayQueue：一个使用优先级队列实现的无界阻塞队列，只有在延迟期满时才能从中提取元素。
-6. LinkedTransferQueue：一个由链表结构组成的无界阻塞队列。与SynchronousQueue类似，还含有非阻塞方法。
-7. LinkedBlockingDeque：一个由链表结构组成的双向阻塞队列。
+1. ArrayBlockingQueue：基于数组实现的有界阻塞队列。
+2. LinkedBlockingQueue：基于链表实现的有界阻塞队列，队列默认长度为Integer.max_value
+
+LinkedTransferQueue：一个由链表结构组成的无界阻塞队列。
+
+LinkedBlockingDeque：一个由链表结构组成的双向阻塞队列。
+
+
+
+SynchronousQueue：一个不存储元素的阻塞队列，即直接提交给线程不保持它们，使用场景newCachedThreadPool()就使用了不储存元素的阻塞队列。
+
+PriorityBlockingQueue：一个支持优先级排序的无界阻塞队列。
+
+DelayQueue：一个使用优先级队列实现延迟获取的无界阻塞队列，只有在延迟期满时才能从中提取元素。
+
+![image-20220323095629397](java并发面经/image-20220323095629397.png)
+
+
 
 比较常用的是 LinkedBlockingQueue，线程池的排队策略和 BlockingQueue 息息相关。
 
@@ -556,12 +608,50 @@ public class Thread implements Runnable {
 
 **拒绝策略：当线程池的任务超出线程池队列可以存储的最大值之后，执行的策略。** 默认的拒绝策略有以下 4 种：
 
-- AbortPolicy：拒绝并抛出异常。
-- CallerRunsPolicy：使用当前调用的线程来执行此任务。
-- DiscardOldestPolicy：抛弃队列头部（最旧）的一个任务，并执行当前任务。
-- DiscardPolicy：忽略并抛弃当前任务。
+- AbortPolicy：丢弃任务并抛出异常。
+- DiscardPolicy：忽略并抛弃任务。
+- DiscardOldestPolicy：抛弃队列最前面的任务，然后重新提交被拒绝的任务。
+- CallerRunsPolicy：由调用线程（提交任务的线程）处理该任务
 
-线程池的默认策略是 AbortPolicy 拒绝并抛出异常。
+线程池的默认策略是 AbortPolicy 丢弃并抛出异常。
+
+
+
+## Worker线程管理
+
+线程池内的工作线程Worker
+
+Worker这个工作线程，实现了Runnable接口，并持有一个线程thread，一个初始化的任务firstTask。
+
+![image-20220323110948598](java并发面经/image-20220323110948598.png)
+
+![image-20220323111316485](java并发面经/image-20220323111316485.png)
+
+
+
+**Worker线程增加**
+
+Worker是通过继承AQS，使用AQS来实现独占锁这个功能。
+
+增加线程是通过线程池中的addWorker方法，该方法的功能就是增加一个线程，addWorker方法有两个参数：firstTask、core。firstTask参数用于指定新增的线程执行的第一个任务，该参数可以为空；core参数为true表示在新增线程时会判断当前活动线程数是否少于corePoolSize，false表示新增线程前需要判断当前活动线程数是否少于maximumPoolSize.
+
+
+
+**Worker线程回收**
+
+线程池使用一张Hash表去持有线程的引用，这样可以通过添加引用、移除引用这样的操作来控制线程的生命周期。
+
+线程池中线程的销毁依赖JVM自动的回收，线程池做的工作是根据当前线程池的状态维护一定数量的线程引用，防止这部分线程被JVM回收，当线程池决定哪些线程需要回收时，只需要将其引用消除即可。
+
+
+
+**Worker线程执行任务**
+
+在Worker类中的run方法调用了runWorker方法来执行任务。
+
+
+
+
 
 
 
@@ -587,6 +677,8 @@ CountDownLatch相对于join方法的优点大致有两点：
 - 使用线程池来管理线程一般都是直接添加Runnable到线程池，这时就没有办法再调用线程的join方法了，而仍可在子线程中递减计数器，也就是说CountDownLatch相比join方法可以更灵活地控制线程的同步。
 
 CountDownLatch是基于AQS实现的
+
+
 
 主要用法：
 
@@ -636,7 +728,7 @@ Semaphore还是使用AQS实现的，并且可以选取公平性策略（默认�
 
 
 
-## 并发编程之AQS
+## 并发编程之AQS 抽象队列同步器
 
 https://www.cnblogs.com/waterystone/p/4920797.html
 
