@@ -1,5 +1,19 @@
 数据库表语句
 
+顺序
+
+SELECT
+	*
+FROM stu LEFT JOIN school
+ON stu.school=school.sname
+WHERE stu.grade >97
+Group BY stu.school
+having stu.age>=20
+ORDER BY stu.age
+LIMIT 0,2;
+
+
+
 ## 更改字段长度
 ALTER TABLE 表名 MODIFY COLUMN 字段名  数据类型(修改后的长度)
 ALTER TABLE attence MODIFY COLUMN id INT(20)
@@ -131,6 +145,8 @@ FROM mytable
 WHERE col > 2
 GROUP BY col
 HAVING num >= 2;
+
+
 
 
 

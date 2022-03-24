@@ -1,0 +1,167 @@
+/*Table structure for table `users` */
+
+DROP TABLE IF EXISTS `users`;
+
+CREATE TABLE `users` (
+  `username` varchar(50) NOT NULL,
+  `password` varchar(100) NOT NULL,
+  `enabled` tinyint(1) NOT NULL,
+  `is_new` tinyint(1) DEFAULT NULL,
+  `reg_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+/*Table structure for table `user` */
+
+DROP TABLE IF EXISTS `user`;
+
+CREATE TABLE `user` (
+  `id` bigint(64) NOT NULL AUTO_INCREMENT,
+  `userid` bigint(64) NOT NULL,
+  `username` varchar(64) NOT NULL,
+  `userscreenname` varchar(64) NOT NULL,
+  `description` mediumtext,
+  `createat` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `url` mediumtext,
+  `profileimageurl` mediumtext,
+  `profilebackgroundimageurl` mediumtext,
+  `location` mediumtext,
+  `timezone` mediumtext,
+  `accesslevel` bigint(64) NOT NULL DEFAULT '0',
+  `statuscount` bigint(64) NOT NULL DEFAULT '0',
+  `followerscount` bigint(64) NOT NULL DEFAULT '0',
+  `friendscount` bigint(64) NOT NULL DEFAULT '0',
+  `favouritescount` bigint(64) NOT NULL DEFAULT '0',
+  `listedcount` bigint(64) NOT NULL DEFAULT '0',
+  `isprotected` tinyint(1) NOT NULL DEFAULT '0',
+  `isgeoenabled` tinyint(1) NOT NULL DEFAULT '0',
+  `isshowallinlinemedia` tinyint(1) NOT NULL DEFAULT '0',
+  `iscontributorsenable` tinyint(1) NOT NULL DEFAULT '0',
+  `isfollowrequestsent` tinyint(1) NOT NULL DEFAULT '0',
+  `isprofilebackgroundtiled` tinyint(1) NOT NULL DEFAULT '0',
+  `isprofileusebackgroundtiled` tinyint(1) NOT NULL DEFAULT '0',
+  `istranslator` tinyint(1) NOT NULL DEFAULT '0',
+  `isverified` tinyint(1) NOT NULL DEFAULT '0',
+  `vtcoffset` bigint(64) NOT NULL DEFAULT '0',
+  `lang` varchar(64) NOT NULL DEFAULT 'en',
+  `biggerprofileimageurl` mediumtext,
+  `biggerprofileimageurlhttps` mediumtext,
+  `miniprofileimageurl` mediumtext,
+  `miniprofileimageurlhttps` mediumtext,
+  `originalprofileimageurl` mediumtext,
+  `originalprofileimageurlhttps` mediumtext,
+  `profilebackgroundimageurlhttps` mediumtext,
+  `profilebanneripadurl` mediumtext,
+  `profilebanneripadretinaurl` mediumtext,
+  `profilebannermobileurl` mediumtext,
+  `profilebannermobileretinaurl` mediumtext,
+  `profilebannerretinaurl` mediumtext,
+  `profilebannerurl` mediumtext,
+  `profileimageurlhttps` mediumtext,
+  `updatetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `sensitivity` float NOT NULL DEFAULT '0',
+  `sensitivity2` float NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `userid` (`userid`),
+  KEY `createat` (`createat`),
+  KEY `accesslevel` (`accesslevel`),
+  KEY `statuscount` (`statuscount`),
+  KEY `followerscount` (`followerscount`),
+  KEY `friendscount` (`friendscount`),
+  KEY `favouritescount` (`favouritescount`),
+  KEY `listedcount` (`listedcount`),
+  KEY `isprotected` (`isprotected`),
+  KEY `isgeoenabled` (`isgeoenabled`),
+  KEY `isshowallinlinemedia` (`isshowallinlinemedia`),
+  KEY `iscontributorsenable` (`iscontributorsenable`),
+  KEY `isfollowrequestsent` (`isfollowrequestsent`),
+  KEY `isprofilebackgroundtiled` (`isprofilebackgroundtiled`),
+  KEY `isprofileusebackgroundtiled` (`isprofileusebackgroundtiled`),
+  KEY `istranslator` (`istranslator`),
+  KEY `isverified` (`isverified`),
+  KEY `vtcoffset` (`vtcoffset`),
+  KEY `updatetime` (`updatetime`),
+  KEY `username` (`username`),
+  KEY `userscreenname` (`userscreenname`),
+  KEY `lang` (`lang`),
+  KEY `sensitivity` (`sensitivity`)
+) ENGINE=InnoDB AUTO_INCREMENT=103934 DEFAULT CHARSET=utf8;
+
+
+
+DROP TABLE IF EXISTS `relation`;
+
+CREATE TABLE `relation` (
+  `id` bigint(64) NOT NULL AUTO_INCREMENT,
+  `srcid` bigint(64) NOT NULL,
+  `desid` bigint(64) NOT NULL,
+  `weight` int(5) NOT NULL DEFAULT '0',
+  `updatetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `srcid` (`srcid`),
+  KEY `desid` (`desid`),
+  KEY `weight` (`weight`),
+  KEY `updatetime` (`updatetime`),
+  KEY `relation` (`srcid`,`desid`)
+) ENGINE=InnoDB AUTO_INCREMENT=1803627 DEFAULT CHARSET=utf8;
+
+/*Table structure for table `tweet` */
+
+DROP TABLE IF EXISTS `tweet`;
+
+CREATE TABLE `tweet` (
+  `id` bigint(64) NOT NULL AUTO_INCREMENT,
+  `tweetid` bigint(64) NOT NULL,
+  `userid` bigint(64) NOT NULL,
+  `username` varchar(64) NOT NULL,
+  `tweettext` mediumtext,
+  `createdat` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `accesslevel` bigint(64) DEFAULT '0',
+  `retweetcount` bigint(64) DEFAULT '0',
+  `retweetedstatusid` bigint(64) DEFAULT '0',
+  `retweetedstatustext` mediumtext,
+  `geolocation` mediumtext,
+  `place` mediumtext,
+  `replytouserid` bigint(64) DEFAULT '0',
+  `replytoscreenname` varchar(64) DEFAULT 'null',
+  `replytostatusid` bigint(64) DEFAULT '0',
+  `contributors` varchar(64) DEFAULT 'null',
+  `currentuserretweetid` bigint(64) DEFAULT NULL,
+  `source` varchar(64) DEFAULT NULL,
+  `isfavorited` tinyint(1) DEFAULT '0',
+  `isretweetbyme` tinyint(1) DEFAULT '0',
+  `istruncated` tinyint(1) DEFAULT '0',
+  `isretweet` tinyint(1) DEFAULT '0',
+  `ispossiblysensitive` tinyint(1) DEFAULT '0',
+  `hashtagentities` varchar(200) DEFAULT NULL,
+  `updatetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `sensitivity` float NOT NULL DEFAULT '0',
+  `sensitivity2` float NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`,`createdat`),
+  KEY `tweetid` (`tweetid`),
+  KEY `userid` (`userid`),
+  KEY `createdat` (`createdat`),
+  KEY `accesslevel` (`accesslevel`),
+  KEY `retweetcount` (`retweetcount`),
+  KEY `retweetedstatusid` (`retweetedstatusid`),
+  KEY `replytouserid` (`replytouserid`),
+  KEY `replytostatusid` (`replytostatusid`),
+  KEY `currentuserretweetid` (`currentuserretweetid`),
+  KEY `isfavorited` (`isfavorited`),
+  KEY `isretweetbyme` (`isretweetbyme`),
+  KEY `istruncated` (`istruncated`),
+  KEY `isretweet` (`isretweet`),
+  KEY `ispossiblysensitive` (`ispossiblysensitive`),
+  KEY `updatetime` (`updatetime`),
+  KEY `username` (`username`),
+  KEY `source` (`source`),
+  KEY `hashtagentities` (`hashtagentities`),
+  KEY `sensitivity` (`sensitivity`)
+) ENGINE=InnoDB AUTO_INCREMENT=5976632 DEFAULT CHARSET=utf8；
+
+还有一个comment表
+
+
+

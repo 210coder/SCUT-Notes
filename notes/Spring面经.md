@@ -1,4 +1,4 @@
-﻿## SSM框架
+## SSM框架
 
 
 
@@ -45,6 +45,8 @@ Spring AOP就是基于动态代理的,比如Cglib，AspectJ。AspectJ 应该算�
 2. 在类中定义一个ThreadLocal成员变量，将需要的可变成员变量保存在 ThreadLocal 中（推荐的一种方式）。
 
 ## Spring 中的 bean 生命周期
+
+
 
 ## 对于 Spring MVC的 了解
 
