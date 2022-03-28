@@ -65,6 +65,14 @@ etcd是一个键值数据库，通过watch监控etcd键值的变化 来监控配
 
 
 
+## Zookeeper作用
+
+服务注册发现的 做分布式应用的时候 
+
+
+
+
+
 集群部署和测试：
 
 Kafka使用ZooKeeper管理集群，ZooKeeper用于协调服务器或集群拓扑，ZooKeeper是配置信息的一致性文件系统。
@@ -115,15 +123,13 @@ Kafka的目的是通过 并行加载机制统一线上和离线消息处理，�
 
 5、Consumer——消息消费者，向Kafka broker读取消息的客户端。
 
- 
 
- 
 
 ZooKeeper可以将拓扑更改发送到Kafka，如果集群中的某台服务器宕机或者某个topic被添加、删除，集群中的每个节点都可以知道新服务器何时加入，
 
 ZooKeeper提供Kafka Cluster配置的同步视图。
 
- 
+
 
 Kafka服务器
 
@@ -141,11 +147,19 @@ Kafka集群最大可同时存在10,100或1,000个服务器。Kafka将每个parti
 
 https://www.cnblogs.com/06080410z/p/15349784.html 讲得挺细的
 
-1.1 为什么需要消息队列 （MO）
+## 为什么需要消息队列 （MO）
 
 主要原因是由于在高并发环境下，同步请求来不及处理，请求往往会发生阻塞。比如大量的请求并发访问数据库，导致行锁表锁，最后请求线程会堆积过多， 从而触发 too many connection 错误， 引发雪崩效应。
 
 我们使用消息队列，通过异步处理请求，从而缓解系统的压力。消息队列常应用于异步处理，流量削峰，应用解耦，消息通讯等场景当前比较常见的 MQ 中间件有 ActiveMQ、RabbitMQ、RocketMQ、Kafka 等。
+
+
+
+异步
+
+削峰
+
+解耦
 
  
 
@@ -169,13 +183,135 @@ Kafka 是最初由 Linkedin 公司开发，是一个分布式、支持分区的�
 
  
 
-2.3 Kafka的特性
+## Kafka的特点
 
-高吞吐量、低延迟
+高吞吐量、低延迟 高容错率 高可用 
 
 Kafka 每秒可以处理几十万条消息，它的延迟最低只有几毫秒。每个 topic 可以分多个 Partition，Consumer Group 对 Partition 进行消费操作，提高负载均衡能力和消费能力。
 
 
+
+高吞吐量 可以做集群 存储分片  topic 分区做负载，提高Kafka的吞吐量
+
+低延迟 取数据快 不是随机 读取 顺序读取的 零拷贝 网络io
+
+高容错率 配合zookeeper  可以做集群 某个节点挂了 可以选举 leader follower
+
+
+
+## Kafka的基础知识
+
+Broker  每一个kafka实例节点服务器
+
+Topic 消息的主题 每个broker可以有多个Topic
+
+Partition Topic的分区 同一个topic的不同分区数据是不重复的
+
+Replication 默认十个副本 不能超过Broker的数量
+
+在不同的Broker上面 即每一个分区有多个副本 主分区（Leader故障的时候）会选取一个Follower作为Leader (ISR表)
+
+
+
+一台机器不可能有同一个分区的leader 和 follower的
+
+消费
+
+在同一个消费者中，每个消费者实例可以消费多个分区，但每个分区最多只能被消费者组中的一个实例消费。
+
+![image-20220328162927891](Kafka面经/image-20220328162927891.png)
+
+
+
+## ACK应答机制
+
+producer在向Kafka写入消息的时候，可以设置参数来确定是否确认Kafka接受到数据，这个参数可设置的值为0，1，all。
+
+ ![image-20220328160225959](Kafka面经/image-20220328160225959.png)
+
+
+
+## Kafaka分区内消息的有序性
+
+![image-20220328160730470](Kafka面经/image-20220328160730470.png)
+
+
+
+## 分区数据
+
+.index文件 .log文件  .timeindex文件
+
+![image-20220328162006529](Kafka面经/image-20220328162006529.png)
+
+
+
+## 为什么要用Kafka
+
+https://zhuanlan.zhihu.com/p/60288391
+
+1. 全量的消息队列究竟有哪些？
+2. Kafka、RocketMQ、RabbitMQ的优劣势比较；
+3. 以及消息队列的选型； 
+
+
+
+Kafka
+
+scala语言 高吞吐量 单机10万级并发 写入性能高 毫秒级别
+
+高并发代价可能出现消息的丢失 所以用于大数据的日志收集比较常见
+
+支持消息查询
+
+
+
+RabbitMQ
+
+erlang语言 单机万级吞吐量  RabbitMQ确实吞吐量会低一些
+
+学习和维护成本较高 社区活跃度高
+
+
+
+RocketMQ
+
+RocketMQ整合了Kafka和RabbitMQ的优点，例如较高的吞吐量和通过参数配置能够做到消息绝对不丢失。
+
+java语言 单机吞吐量十万级 
+
+消息可靠性：经过参数优化配置，消息可以做到0丢失
+
+不同于Kafka的单一日志收集功能，RocketMQ被广泛运用于订单、交易、计算、消息推送、binlog分发等场景。
+
+RocketMQ提供的丰富的功能。例如延迟消息、事务消息、消息回溯、死信队列等等
+
+
+
+### 如何保证消息顺序性
+
+https://www.jianshu.com/p/ab0275888abf
+
+
+
+Kafka可以保证消息在一个Partition分区内的顺序性。如果生产者按照顺序发送消息，Kafka将按照这个顺序将消息写入分区，消费者也会按照同样的顺序来读取消息（通过自增偏移量）。
+
+
+
+- `retries`: 消息投递失败重试次数
+- `max.in.flight.requests.per.connection`: 生产者在收到kafka响应之前可以投递多少个消息
+
+1. 可以把`retries`设置为0 ，不重试，那么消息肯定是有序的，只不过存在消息投递失败丢失的情况。
+2. 将`max.in.flight.requests.per.connection`设置为1，在接收到Kafka响应之前，只允许一个批次的消息处于投递中的状态，这当然会严重影响Kafka的吞吐量。
+
+
+
+## 如果你要设计一个消息队列 怎么设计
+
+
+
+
+
+## 消息队列设计的难点在于
 
 
 
@@ -190,8 +326,6 @@ kafka 集群支持热扩展
 3. 容错性
 
 允许集群中节点失败（多副本情况下，若副本数量为 n，则允许 n-1 个节点失败）
-
- 
 
 4. 高并发
 
@@ -221,11 +355,11 @@ https://www.nowcoder.com/discuss/809261?type=all&order=recall&pos=&page=0&ncTrac
 
  
 
-kafka的应用场景和优势（入场券）
+## kafka的应用场景和优势（入场券）
 
 解耦，高吞吐（以及如何保证高吞吐）
 
- 
+
 
  
 
@@ -241,9 +375,9 @@ kafka如何做到发送端和接收端的顺序一致性？
 
 零拷贝的实现原理，省略了哪一次上下文切换？（这个也是netty经常会问到的问题）
 
- 
 
- 
+
+
 
 如果频繁的从磁盘读数据然后发给消费者，会增加两次没必要的拷贝，如下图：
 
@@ -420,7 +554,7 @@ LEO（Log End Offset） 每个副本的最后一个offset
 
 HW 所有副本中的最小LEO
 
-kafka是通过HW（High Water Mark） 机制来保证数据的一致性。
+**kafka是通过HW（High Water Mark） 机制来保证数据的一致性。**
 
 ![kafka的HW(High Watermark)机制](https://img-blog.csdnimg.cn/20200806150931935.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl8zODI0NjUxOA==,size_16,color_FFFFFF,t_70)
 

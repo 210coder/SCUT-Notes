@@ -46,6 +46,8 @@ Spring AOP就是基于动态代理的,比如Cglib，AspectJ。AspectJ 应该算�
 
 ## Spring 中的 bean 生命周期
 
+![image-20220324174425124](Spring面经/image-20220324174425124.png)
+
 
 
 ## 对于 Spring MVC的 了解
