@@ -483,7 +483,7 @@ https://tech.meituan.com/2020/04/02/java-pooling-pratice-in-meituan.html
 
 ## 线程池的类型如下
 
-常见线程池
+常见线程池 **四种**
 
 ①newSingleThreadExecutor
 
@@ -504,8 +504,6 @@ https://tech.meituan.com/2020/04/02/java-pooling-pratice-in-meituan.html
 延时任务执行的线程池
 
 创建一个核心线程个数为n, 最大线程数为Integer.max_value, keepAliveTime = 0,  阻塞队列为DelayQueue
-
-
 
 
 
@@ -546,7 +544,7 @@ https://www.cnblogs.com/jinggod/p/8490223.html
 
 1. corePoolSize：核心线程数
 
-   通常情况下最多添加corePoolSize个Worker，当任务过多时添加到阻塞队列里，会继续添加Worker直到Worker数达到maximumPoolSize，超过maximumPoolSize实施拒绝策略。
+   通常情况下最多添加corePoolSize个Worker，当任务过多时添加到阻塞队列里，阻塞队列满的时候，会继续创建Worker直到Worker数达到maximumPoolSize，超过maximumPoolSize实施拒绝策略，有四种拒绝策略。
 
 2. maximumPoolSize：线程池的最大线程数。-
 
@@ -556,19 +554,27 @@ https://www.cnblogs.com/jinggod/p/8490223.html
 
 4. TimeUnit：存活时间的时间单位。
 
-5. workQueue：用于保存等待执行的任务的阻塞队列、任务队列。
+5. workQueue：用于保存等待执行的任务的阻塞队列、任务队列。**七种**
 
    如基于数组的有界队列ArrayBlockingQueue
 
-   基于链表的无界队列LinkedBlockingQueue
+   基于链表的有界队列LinkedBlockingQueue
 
-   最多只有一个元素的同步队列SynchronousQueue
+   基于链表的无界队列LinkedTransferQueue
 
-   优先级队列 PriorityBlockingQueue
+   基于链表的双向阻塞队列LinkedBlockingQueue
+   
+   
+   
+   不存储元素的同步队列SynchronousQueue
+   
+   支持优先级排序的无界阻塞队列 PriorityBlockingQueue
+   
+   优先级队列实现，实现延迟获取的延迟无界阻塞队列DelayQueue
 
 
 
-6. ThreadFactory：创建线程的工厂。
+6. ThreadFactory：创建线程的工厂
 
 7. RejectedExecutionHandler：拒绝策略
 

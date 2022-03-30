@@ -365,6 +365,18 @@ finalize是Object的一个方法，在对象被GC回收之前自动调用这个�
 
 
 
+ ##  Java怎么实现序列化
+
+1.实现序列化:
+
+1)让类实现Serializable接口,该接口是一个标志性接口,标注该类对象是可被序列
+
+2)然后使用一个输出流来构造一个对象输出流 ObjectOutputStream  并通过writeObect(Obejct)方法就可以将实现对象写出
+
+3)如果需要反序列化,则可以用一个输入流建立对象ObjectInputStream  输入流,然后通过readObeject方法从流中读取对象
+
+如果不需要序列化的时候加关键字transient
+
 
 
 ## 泛型 ？？
