@@ -10,66 +10,13 @@ ELK方案存在的问题
 
  
 
-kafka学习
-
-https://gitbook.cn/books/5ae1e77197c22f130e67ec4e/index.html
-
-
-
-**日志收集系统模块功能 **没有做的计划
-
-Agent模块:
-
-log_agent部署到需要收集日志的服务器上，将从业务线上拉取的日志数据发送到kafka中，类似于生产者
-
-Transfer模块：
-
-log_transfer从kafka中读取日志，利用flink存储至ElasticSearch中，类似于消费者
-
-Analysis模块：
-
-使用Kibana做可视化展示 (to do)
-
- 
-
-使用etcd做配置管理，管理日志收集的信息（如日志文件路径、业务线名称等），实时更新agent和transfer，实现热加载。
-
-
-
-Kafka集群 + Zookeeper集群 +ES 日志收集系统 日志收集项目
-
-由agent和transfer两个模块组成，采用**生产者-消费者模式**，实现对业务日志的实时收集与存储。
-
-使用Kafka作为消息队列暂存日志数据，对各业务线的日志数据进行聚合并进行长期监控 
-
-agent模块实时读取日志文件发送至Kafka；transfer模块异步地从Kafka读取日志数据，使用ElasticSearch进行持久化存储 
-
-使用etcd管理日志收集任务的配置信息，实时更新agent和transfer模块，实现**热加载**
-
-
-
-- ETCD
-
-使用etcd做配置管理，管理日志收集的信息（如日志文件路径、业务线名称等），实时更新agent和transfer，实现热加载。
-
-etcd是一个键值数据库，通过watch监控etcd键值的变化 来监控配置的变化 实现热加载
-
-
-
-- zookeeper
-- 管理集群配置、选举 Leader 以及在 consumer group 发生变化时进行 Rebalance（即消费者负载均衡）
-
- 使用ZooKeeper管理Kafka的集群，ZooKeeper 的作用有：broker 注册、topic 注册、producer 和 consumer 负载均衡、维护 partition 与 consumer 的关系、记录消息消费的进度以及 consumer 注册等。
-
-
-
-
-
 ## Zookeeper作用
 
 服务注册发现的 做分布式应用的时候 
 
+- 管理集群配置、选举 Leader 以及在 consumer group 发生变化时进行 Rebalance（即消费者负载均衡）
 
+ 使用ZooKeeper管理Kafka的集群，ZooKeeper 的作用有：broker 注册、topic 注册、producer 和 consumer 负载均衡、维护 partition 与 consumer 的关系、记录消息消费的进度以及 consumer 注册等。
 
 
 
@@ -108,6 +55,14 @@ zookeeper.connect=localhost:2181,localhost:2182,localhost:2183
 这三个端口是zookeeper客户端连接的端口号
 
  
+
+kafka学习
+
+https://gitbook.cn/books/5ae1e77197c22f130e67ec4e/index.html
+
+
+
+## Kafka
 
 http://blog.itpub.net/31077337/viewspace-2185691/
 
@@ -309,7 +264,9 @@ Kafka可以保证消息在一个Partition分区内的顺序性。如果生产者
 
 ## 如果你要设计一个消息队列 怎么设计
 
+通信 
 
+可靠性
 
 
 
@@ -419,6 +376,8 @@ kafka 默认的模式是 at least once ，但这种模式可能会产生重复�
 
 在业务场景保存数据时使用了 INSERT INTO ...ON DUPLICATE KEY UPDATE语法，不存在时插入，存在时更新，是天然支持幂等性的。
 
+
+
 **kafka 如何保证数据的不重复和不丢失？**
 
 exactly once 模式 精确传递一次。将 offset 作为唯一 id 与消息同时处理，并且保证处理的原子性。消息只会处理一次，不丢失也不会重复。但这种方式很难做到。 
@@ -426,6 +385,8 @@ exactly once 模式 精确传递一次。将 offset 作为唯一 id 与消息同
 kafka 默认的模式是 at least once ，但这种模式可能会产生重复消费的问题，所以在业务逻辑必须做幂等设计。 
 
 使用 exactly Once + 幂等操作，可以保证数据不重复，不丢失。
+
+
 
 **kafka 是如何清理过期数据的？**
 
