@@ -27,13 +27,33 @@
 有Tree的比如TreeMap就是红黑树
 
 - `HashMap`： **JDK1.8 之前 `HashMap` 由数组+链表组成的，数组是 `HashMap` 的主体，链表则是主要为了解决哈希冲突而存在的（“拉链法”解决冲突）。JDK1.8 以后在解决哈希冲突时有了较大的变化，当链表长度大于阈值（默认为 8）（将链表转换成红黑树前会判断，如果当前数组的长度小于 64，那么会选择先进行数组扩容，而不是转换为红黑树）时，将链表转化为红黑树，以减少搜索时间**
+
 - `LinkedHashMap`： `LinkedHashMap` 继承自 `HashMap`，所以它的底层仍然是基于拉链式散列结构即由数组和链表或红黑树组成。另外，`LinkedHashMap` 在上面结构的基础上，增加了一条双向链表，使得上面的结构可以保持键值对的插入顺序。同时通过对链表进行相应的操作，实现了访问顺序相关逻辑。
-![在这里插入图片描述](https://img-blog.csdnimg.cn/eee42043e7b14fa8b4d2fdc7ce92a3b0.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_19,color_FFFFFF,t_70,g_se,x_16)
+
+默认情况是按照插入顺序的,有个构造函数是指定按访问顺序的 LinkedHashMap(int initialCapacity, float loadFactor, boolean accessOrder) 
+
+- ![在这里插入图片描述](https://img-blog.csdnimg.cn/eee42043e7b14fa8b4d2fdc7ce92a3b0.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_19,color_FFFFFF,t_70,g_se,x_16)
 LinkHashMap如何实现有序的：
 在HashMap的基础上增加了一个双向链表，LinkedHashMap对Entry进行了扩展，增加了指针before和after。
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/4224e499d4164beea119756aa0ae8198.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_20,color_FFFFFF,t_70,g_se,x_16)
+
 - `Hashtable`： 数组+链表组成的，数组是 `Hashtable` 的主体，链表则是主要为了解决哈希冲突而存在的
+
 - `TreeMap`： 红黑树（自平衡的排序二叉树）
+
+
+
+**TreeMap 如何重写排序呢**
+
+一个是key实现Comparable接口，重写compareTo()方法，另一个是在TreeMap的构造函数中创建new Comparator<key>() 匿名内部类，重写compare 方法(下图)；
+
+![image-20220409153840369](java容器面经/image-20220409153840369.png)
+
+
+
+**LinkedHashMap实现一个简单的LRU**
+
+![image-20220409153246873](java容器面经/image-20220409153246873.png)
 
 
 
@@ -200,8 +220,6 @@ JDK1.8 以后的 HashMap 在解决哈希冲突时有了较大的变化，当链�
 
 
 
-
-
 ## HashMap 多线程操作导致死循环问题
 多线程下，进行 put 操作会导致 HashMap 死循环，原因在于 HashMap 的扩容 resize()方法。由于扩容是新建一个数组，复制原数据到数组。由于数组下标挂有链表，所以需要复制链表，但是多线程操作有可能导致环形链表，主要原因在于并发下的 Rehash 会造成元素之间会形成一个循环链表。不过，jdk 1.8 后解决了这个问题，但是还是不建议在多线程下使用 HashMap,因为多线程下使用 HashMap 还是会存在其他问题比如数据丢失。并发环境下推荐使用 ConcurrentHashMap 。
 
@@ -253,8 +271,6 @@ hash函数根据key得到哈希值 hash 映射函数如何设计呢 第一个想
 
 
 
-
-
 具有二叉查找树的特点。
 
 不过，与平衡树不同的是，红黑树在插入、删除等操作，**不会像平衡树那样，频繁着破坏红黑树的规则，所以不需要频繁着调整**，
@@ -270,8 +286,6 @@ hash函数根据key得到哈希值 hash 映射函数如何设计呢 第一个想
 1、具有二叉查找树的全部特性。
 
 2、每个节点的左子树和右子树的高度差至多等于1。
-
-
 
 
 
@@ -363,8 +377,6 @@ JDK1.8的ConcurrentHashMap并发控制使用 `synchronized` 和 CAS 来操作，
 ![JDK1.7的ConcurrentHashMap](https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-6/ConcurrentHashMap%E5%88%86%E6%AE%B5%E9%94%81.jpg)
 
 Hashtable使用 `synchronized` 来保证线程安全 ，全表锁锁住整个Hashtable，效率非常低下
-
-
 
 
 

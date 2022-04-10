@@ -1,0 +1,119 @@
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+/**
+ * 面包店：
+ * 10个消费者，不停的消费，每个每次消费1个
+ * 5个生产者，不停的生产，每个每次生产3个
+ * 库存上限100
+ */
+public class BreadShop3 {
+    //库存
+    private static int COUNT = 0;
+    private static Lock lock = new ReentrantLock();
+    private static Condition condition = lock.newCondition();
+    private static int flag=0;
+
+
+    static class Consumer implements Runnable {
+        private String name;
+
+        public Consumer(String name) {
+            this.name = name;
+
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                try {
+                    lock.lock();
+                    //判断库存是否为0
+                    while(COUNT -1< 0) {
+                        condition.await();
+                    }
+                    //库存大于0
+                    COUNT--;
+                    System.out.printf("消费者 %s 消费了了1个面包  库存:%d\n", name, COUNT);
+                    //唤醒阻塞的线程
+                    Thread.sleep(500);
+                    condition.signalAll();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    lock.unlock();
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+
+        }
+    }
+
+    static class Producer implements Runnable {
+        private String name;
+
+        public Producer(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public void run() {
+
+            while (true) {
+                try {
+                    lock.lock();
+                    //判断库存是否大于100，使用while
+                    //如果库存+3>100,将当前线程阻塞.
+                    while (COUNT + 3 > 100) {
+                        condition.await();
+                    }
+                    //生产3个面包
+                    COUNT += 3;
+                    System.out.printf("生产者 %s 生产了了3个面包  库存:%d\n", name, COUNT);
+                    Thread.sleep(500);
+                    condition.signalAll();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    lock.unlock();
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+
+        }
+    }
+
+    public static void main(String[] args) {
+        BreadShop3 breadShop3 = new BreadShop3();
+        Thread[] consumers = new Thread[10];
+        for (int i = 0; i < 10; i++) {
+            consumers[i] = new Thread(new Consumer(String.valueOf(i)));
+        }
+        ;
+        Thread[] producers = new Thread[5];
+        for (int i = 0; i < 5; i++) {
+            producers[i] = new Thread(new Producer(String.valueOf(i)));
+        }
+        ;
+        for (int i = 0; i < 10; i++) {
+            consumers[i].start();
+        }
+        for (int i = 0; i < 5; i++) {
+            producers[i].start();
+        }
+
+
+    }
+
+}
+

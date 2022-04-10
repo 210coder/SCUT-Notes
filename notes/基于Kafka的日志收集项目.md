@@ -122,8 +122,6 @@ RandomAccess[File类](https://so.csdn.net/so/search?q=File类&spm=1001.2101.3001
 
 ## 项目亮点3
 
-采用ETCD动态管理日志收集的配置 例如各种业务线日志收集 进行日志收集配置的服务发现，实现热部署
-
 
 
 发到kafka用到 apache基金会 的Kafka client 对应于go的sarama
