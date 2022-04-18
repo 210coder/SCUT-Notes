@@ -1,0 +1,236 @@
+// 参考https://blog.csdn.net/su749520/article/details/123747052
+// https://blog.csdn.net/huangshulang1234/article/details/79713303
+
+import java.util.*;
+
+interface MyMap<K,V>{
+    public V get(K k);
+    public  V put(K k,V v);
+    public  V remove(K k);
+    public  void resize(int i);
+
+    interface Entry<K,V>{
+        public K getKey();
+        public  V getValue();
+        public  void setValue(V v);
+    }
+}
+
+class MyEntry<K,V> implements MyMap.Entry<K,V>{
+    K k;
+    V v;
+    MyEntry<K,V> next;
+    int hash;
+
+    //构造函数
+    public MyEntry(K k , V v , MyEntry<K,V> next, int hash){
+        this.k = k;
+        this.v = v;
+        this.next = next;
+        this.hash = hash;
+    }
+
+    @Override
+    public K getKey(){
+        return k;
+    }
+
+    @Override
+    public V getValue(){
+        return v;
+    }
+
+    @Override
+    public void setValue(V v) {
+        this.v = v;
+    }
+
+    public MyEntry getNext(){
+        return this.next;
+    }
+
+
+}
+
+class MyHashMap<K,V> implements MyMap<K,V>{
+    private static final int Default_INITIAL_CAPACITY = 1 << 4;
+    private static final float Default_LOAD_FACTOR = 0.75f;
+    private int defaultInitSize;
+    private float defaultLoadFactor;
+
+    private int entryUseSize;
+
+    private MyEntry<K,V>[] table = null;
+
+    public MyHashMap(){
+        this(Default_INITIAL_CAPACITY,Default_LOAD_FACTOR);
+    }
+    public MyHashMap(int default_INITIAL_CAPACITY,float defaultLoadFactor){
+        this.defaultInitSize = default_INITIAL_CAPACITY;
+        this.defaultLoadFactor = defaultLoadFactor;
+        table = new MyEntry[this.defaultInitSize];
+    }
+
+    @Override
+    public V get(K k) {
+        int index = hash(k) & (defaultInitSize - 1);
+        if(table[index] == null){
+            return null;
+        }else{
+            MyEntry<K,V> entry = table[index];
+            while (entry != null){
+                if(entry.getKey() == k||entry.getKey().equals(k)){
+                    return entry.getValue();
+                }
+
+                entry = entry.getNext();
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public V put(K k, V v) {
+
+        //扩容
+        V oldValue = null;
+        if(entryUseSize >= defaultInitSize * defaultLoadFactor){
+            resize(2 * defaultInitSize);
+        }
+
+        //计算在数组中的位置
+        int index = hash(k) & (defaultInitSize - 1);
+
+        //头节点为空 直接插入
+        if(table[index] == null){
+            table[index] = new MyEntry<K,V>(k,v,null,hash(k));
+            ++entryUseSize;
+        }else{
+            MyEntry<K,V> entry = table[index];
+            MyEntry<K,V> e = entry;
+            while (e != null){
+                if(k == e.k||k.equals(e.k)){
+                    oldValue = e.getValue();
+                    e.setValue(v);
+                    return oldValue;
+                }
+                e = e.getNext();
+            }
+
+            //采用头插法
+
+            table[index] = new MyEntry<>(k,v,entry,hash(k));
+            ++entryUseSize;
+
+        }
+
+        System.out.println("增加元素 size 为" + entryUseSize);
+
+        return oldValue;
+    }
+
+
+    @Override
+    public V remove(K k) {
+        int index = hash(k) & (defaultInitSize-1);
+        MyEntry entry = table[index];
+
+        if(entry == null){
+            return null;
+        }else{
+            //考虑是头节点还是后面的节点
+            if(entry.k == k||entry.k.equals(k)){
+                table[index] = entry.next;
+                return  (V)entry.getKey();
+            }
+
+            while (entry.next != null){
+                if(entry.next.getKey() == k||entry.next.getKey().equals(k)){
+                    MyEntry temp = entry.next;
+
+                    entry.next = entry.next.next;
+                    entryUseSize--;
+
+                    System.out.println("增加元素 size 为" + entryUseSize);
+                    return (V)temp.getValue();
+                }
+
+                entry = entry.next;
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public void resize(int i){
+        MyEntry<K,V>[] newTable = new MyEntry[i];
+        defaultInitSize = i;
+
+        System.out.println("扩容" + defaultInitSize);
+        //重新hash
+
+        for(MyEntry entry:table){
+            MyEntry<K,V> e = entry;
+            if(e != null){
+                //释放掉旧数组的对象引用
+                entry = null;
+                while (e != null){
+                    MyEntry<K,V> next = e.next;
+                    int index = e.hash & (defaultInitSize - 1);
+                    // 采用头插法
+                    e.next = newTable[index];
+                    newTable[index] = e;
+                    e = next;
+                }
+
+            }
+
+        }
+
+        table = newTable;
+
+    }
+
+    private int hash(K k) {
+        int h;
+        return (k == null) ? 0 : (h = k.hashCode()) ^ (h >>> 16);
+    }
+}
+
+
+
+
+public class Main {
+    public static void main(String[] args) {
+        MyHashMap<Integer,String> map = new MyHashMap<Integer,String>();
+
+        for (int i = 0; i < 100; i++) {
+            map.put(i,"value" + i );
+        }
+
+        for (int i = 0; i < 100; i++) {
+            System.out.println(i + " " + map.get(i));
+        }
+
+        for (int i = 0; i < 20; i++) {
+            map.remove(i);
+        }
+
+
+        for (int i = 0; i < 100; i++) {
+            System.out.println(i + " " + map.get(i));
+        }
+
+        for(int i = 90;i < 100;i++){
+            map.put(i,"相同的key value" + i );
+        }
+
+        for (int i = 0; i < 100; i++) {
+            System.out.println(i + " " + map.get(i));
+        }
+
+    }
+}
+

@@ -649,11 +649,11 @@ ThreadLocals就是一个工具壳，它通过 set把value值放到当前线程�
 
 ## InheritableThreadLocal类
 
-inheritableThreadLocals继承自ThreadLocal 类，能够让子线程访问在父线程设置的本地变量。就是这个类用变量inheritableThreadLocals替换了threadLocals变量。
+**inheritableThreadLocals继承自ThreadLocal 类，能够让子线程访问在父线程设置的本地变量**。就是这个类用变量inheritableThreadLocals替换了threadLocals变量。
 
 把本地变量值放到当前线程的inheritableThreadLocals变量里面，线程通过inheritableThreadLocals类实例的set或get方法设置变量值。
 
-父线程创建子线程时，构造函数会把父线程的inheritableThreadLocals变量里面的本地变量复制一份保存在子线程的inheritableThreadLocals变量里面。
+**父线程创建子线程时，构造函数会把父线程的inheritableThreadLocals变量里面的本地变量复制一份保存在子线程的inheritableThreadLocals变量里面。**
 
 
 

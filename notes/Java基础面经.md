@@ -535,6 +535,10 @@ public class Thread implements Runnable {
 
 
 
+ 
+
+
+
 ## 为什么要用线程池
 
 1. 在执行大量异步任务时，线程池能够提供较好的性能。
