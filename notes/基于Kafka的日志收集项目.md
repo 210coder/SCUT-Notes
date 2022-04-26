@@ -56,6 +56,12 @@ newFixedThreadExecutor(100)
 
 
 
+可以改为要需提取的线程池 newCacheThreadExecutor 
+
+创建一个按需创建线程的线程池,初始线程个数为0,即核心线程数为0，最大线程数为Integer.max_value, keepAliveTime = 60s,表示只有当前线程在60s内空闲则回收，阻塞队列为同步队列, 同步队列里面最多只有一个任务，加入同步队列的任务会被马上执行。
+
+
+
 线程池new 开一个线程去生产消息 线程需要判断这个文件有没有存在 没有的话分配错误  读取日志里面的变化日志 这个是通过什么去检测变化的 
 
 加入读取日志的线程崩了 通过心跳检测重新分配线程 从上一次的offset去读
@@ -84,7 +90,7 @@ RandomAccess[File类](https://so.csdn.net/so/search?q=File类&spm=1001.2101.3001
 
 
 
-`RandomAccessFile` 方式的优势是：支持随机读取，读取日志消耗内存少。dom
+`RandomAccessFile` 方式的优势是：支持随机读取，读取日志消耗内存少。
 
 - 这种方式可以快速定位到文件的读取位置，定位到文件读取位置的时间复杂度为 `O(1)` 。
 - 该方式读取本地文件，会逐个字节读取文件中内容，且不使用缓存，内存占用极低。
@@ -162,8 +168,6 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 
   
 
-  
-
   通过etcd进行配置的增删改实现日志的收集。
 
  把要收集的日志文件的路径名更新到etcd里面 监控管理日志收集任务的配置信息
@@ -173,12 +177,6 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 etcd日志路径只有一个key value 每个key相当于一个项目系统ip  value 是这个项目下的日志收集 假设为json格式 里面包含非常多的日志路径 和 收集日志模块主题
 
 ![image-20220329094433995](基于Kafka的日志收集项目/image-20220329094433995.png)
-
-
-
-
-
-
 
 
 
@@ -328,9 +326,7 @@ host    client_ip   status  req_time    AgentVersion    time
 2. \-   192.168.20.191  200 0.042   Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 2017-12-18 11:33:39
 3. \-   192.168.20.191  200 0.030   Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 2017-12-18 11:33:39
 
-前面的主机host -
-
-
+前面的主机host
 
 
 
