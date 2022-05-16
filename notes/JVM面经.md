@@ -42,8 +42,6 @@ Java 堆是所有线程共享的一块内存区域，在虚拟机启动时创建
 
 
 
-
-
 ## Java中创建对象都做了什么事情
 
 Person p = new Person("zhangsan",20);
@@ -72,6 +70,8 @@ Java中创建对象的内存图
 
 
 ![Java中创建对象的内存图_.net_03](https://s5.51cto.com/images/blog/202109/28/fc992e9d315ba1e02940e2772df7dc42.png?x-oss-process=image/watermark,size_16,text_QDUxQ1RP5Y2a5a6i,color_FFFFFF,t_100,g_se,x_10,y_10,shadow_90,type_ZmFuZ3poZW5naGVpdGk=)
+
+
 
 
 
