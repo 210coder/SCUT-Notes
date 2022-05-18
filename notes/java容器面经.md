@@ -376,15 +376,36 @@ HashTable采用的是数组+链表
 
 - 实现线程的安全方式
 
+jdk1.7中是采用Segment + HashEntry + ReentrantLock的方式进行实现的
+
 JDK1.7的 ConcurrentHashMap采用分段锁，每把锁锁定容器里的一部分数据，多线程访问不同数据段的数据
+
+每个数组(Segment)都会对应一把不同的锁；只有当多个线程操作同一个小数组时，才会发生线程串行的情形。
 
 JDK1.8的ConcurrentHashMap并发控制使用 `synchronized` 和 CAS 来操作，`synchronized` 只锁定当前链表或红黑二叉树的首节点，这样只要 hash 不冲突，就不会产生并发。
 
+
+
+1. 采用Node + CAS + Synchronized来保证并发安全进行实现。
+
+2. 假设两个线程同时对数组的第一个位置进行put操作，则会采取CAS策略，保证线程并发的安全性，同一时间只有一个线程成功执行CAS操作；
+   在插入元素的过程中，会给插入的数组元素加上synchronized锁，
+
+
+
+3. 在1.8中ConcurrentHashMap的get操作全程不需要加锁，这也是它比其他并发集合比如hashtable、用Collections.synchronizedMap()包装的hashmap;安全效率高的原因之一。
+
+4. get操作全程不需要加锁是因为Node的成员val是用volatile修饰的和数组用volatile修饰没有关系。
+
+5. 数组用volatile修饰主要是保证在数组扩容的时候保证可见性。
+
+
+
 ![JDK1.7的ConcurrentHashMap](https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-6/ConcurrentHashMap%E5%88%86%E6%AE%B5%E9%94%81.jpg)
 
-Hashtable使用 `synchronized` 来保证线程安全 ，全表锁锁住整个Hashtable，效率非常低下
+Hashtable使用 `synchronized` 来保证线程安全 ，用`synchronized` 同步get、put方法，全表锁锁住整个Hashtable，效率非常低下
 
-
+![image-20220517162648812](java容器面经/image-20220517162648812.png)
 
 ## ConcurrentHashMap 和 HashMap 的区别
 
