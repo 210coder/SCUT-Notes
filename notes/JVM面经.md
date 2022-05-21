@@ -165,7 +165,7 @@ Java中创建对象的内存图
 
 
 
-还可以参考
+类加载还可以参考
 
 https://zhuanlan.zhihu.com/p/33509426
 

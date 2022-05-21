@@ -144,7 +144,7 @@ HashMap构造函数的一些参数：
 
 记住这个
 
-**扩容：**
+**hashMap扩容：**
 
 扩容 当put(key,value)时，刚开始table为空或长度为0 或者 ++size 大于threshold时，需要扩容
 
@@ -406,6 +406,8 @@ JDK1.8的ConcurrentHashMap并发控制使用 `synchronized` 和 CAS 来操作，
 Hashtable使用 `synchronized` 来保证线程安全 ，用`synchronized` 同步get、put方法，全表锁锁住整个Hashtable，效率非常低下
 
 ![image-20220517162648812](java容器面经/image-20220517162648812.png)
+
+
 
 ## ConcurrentHashMap 和 HashMap 的区别
 
