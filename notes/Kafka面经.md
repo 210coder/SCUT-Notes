@@ -10,13 +10,91 @@ ELK方案存在的问题
 
  
 
+kafka 2.13
+
+zookeeper 3.5.9
+
 ## Zookeeper作用
 
 服务注册发现的 做分布式应用的时候 
 
-- 管理集群配置、选举 Leader 以及在 consumer group 发生变化时进行 Rebalance（即消费者负载均衡）
+- 管理集群配置、选举 Leader 以及在 consumer group 发生变化时进行 **Rebalance**（即消费者负载均衡）。
+- Producer使用push模式将消息发布到broker，Consumer使用pull模式从broker订阅并消费消息.
 
  使用ZooKeeper管理Kafka的集群，ZooKeeper 的作用有：broker 注册、topic 注册、producer 和 consumer 负载均衡、维护 partition 与 consumer 的关系、记录消息消费的进度以及 consumer 注册等。
+
+考虑到zk本身的一些因素以及整个架构较大概率存在单点问题，新版本中逐渐弱化了zookeeper的作用。新的consumer使用了kafka内部的group coordination协议，也减少了对zookeeper的依赖
+
+
+
+**Broker注册**
+
+Broker是分布式部署并且相互之间相互独立，但是需要有一个注册中心对整个集群的Broker进行管理，此时就使用了Zookeeper。在Zookeeper上会有一个专门用来记录Broker服务器列表的节点：/brokers/ids
+
+每个Broker在启动时，都会在Zookeeper上进行注册，即到/brokers/ids下创建属于自己的节点，如/brokers/ids/[0…N]。
+
+Kafka使用了全局唯一的数字来指代每个Broker服务器，不同的Broker必须使用不同的Broker ID进行注册，创建完节点后，每个Broker就会将自己的IP地址和端口信息记录到该节点中去。其中，Broker创建的节点类型是临时节点，一旦Broker宕机，则对应的临时节点也会被自动删除。这样，我们就可以很方便的监控到Broker节点的变化，及时调整负载均衡等。
+
+
+
+**Topic注册**
+
+在kafka中，用户可以自定义多个topic，每个topic又被划分为多个分区，每个分区存储在一个独立的broker上。这些分区信息及与Broker的对应关系都是由Zookeeper进行维护。
+
+在zookeeper中，建立专门的节点来记录这些信息，其节点路径为/brokers/topics/{topic_name}。并且topic创建的节点类型也是临时节点
+
+
+
+**生产者负载均衡**
+
+同一个Topic消息会被分区并将其分布在多个Broker上。由于每个Broker启动时，都会在Zookeeper上进行注册，生产者会通过该节点的变化来动态地感知到Broker服务器列表的变更，这样就可以实现动态的负载均衡。
+
+
+
+**消费者负载均衡**
+
+与生产者类似，Kafka中的消费者同样需要进行负载均衡来实现多个消费者合理地从对应的Broker服务器上接收消息，每个消费者分组包含若干消费者，**每条消息都只会发送给分组中的一个消费者**，不同的消费者分组消费自己特定的Topic下面的消息，互不干扰。
+
+每个消费者都需要关注所属消费者分组中其他消费者服务器的变化情况，即对/consumers/[group_id]/ids节点注册子节点变化的Watcher监听，一旦发现消费者新增或减少，就触发消费者的负载均衡。
+
+还对Broker服务器变化注册监听。消费者需要对/broker/ids/[0-N]中的节点进行监听，如果发现Broker服务器列表发生变化，那么就根据具体情况来决定是否需要进行消费者负载均衡。
+
+
+
+**分区与消费者的关系**
+消费者组 Consumer group 下有多个 Consumer（消费者）。
+
+对于每个消费者组 (Consumer Group)，Kafka都会为其分配一个全局唯一的Group ID，Group 内部的所有消费者共享该 ID。订阅的topic下的每个分区只能分配给某个 group 下的一个consumer(当然该分区还可以被分配给其他group)。同时，Kafka为每个消费者分配一个Consumer ID。
+
+在Kafka中，规定了每个消息分区 只能被同组的一个消费者进行消费，因此，**需要在 Zookeeper 上记录 消息分区 与 Consumer 之间的关系**，每个消费者一旦确定了对一个消息分区的消费权力，需要将其Consumer ID 写入到 Zookeeper 对应消息分区的临时节点上，例如：
+/consumers/[group_id]/owners/[topic]/[broker_id-partition_id]
+其中，[broker_id-partition_id]就是一个 消息分区 的标识，节点内容就是该消息分区上消费者的Consumer ID。
+
+
+
+**记录消息消费的进度Offset**
+在消费者对指定消息分区进行消息消费的过程中，需要定时地将分区消息的消费进度Offset记录到Zookeeper上，以便在该消费者进行重启或者其他消费者重新接管该消息分区的消息消费后，能够从之前的进度开始继续进行消息消费。
+
+Offset在Zookeeper中由一个专门节点进行记录，其节点路径为:
+
+/consumers/[group_id]/offsets/[topic]/[broker_id-partition_id]
+
+节点内容就是Offset的值。
+
+
+
+**消费者注册**
+		注册新的消费者分组
+当新的消费者组注册到zookeeper中时，zookeeper会创建专用的节点来保存相关信息，其节点路径为 /consumers/{group_id}，其节点下有三个子节点，分别为[ids, owners, offsets]。
+
+ids节点：记录该消费组中当前正在消费的消费者；
+
+owners节点：记录该消费组消费的topic信息；
+
+offsets节点：记录每个topic的每个分区的offset；
+
+​		注册新的消费者
+当新的消费者注册到zookeeper中时，会在/consumers/{group_id}/ids节点下创建临时子节点，并记录相关信息
 
 
 
@@ -58,9 +136,9 @@ Rebalance的过程如下：
 
 kafka新版本提供了三种rebalance分区分配策略：
 
-- range 分区尽可能平均的分配给所有的消费者。
-- round-robin 将消费者组内所有主题的分区按照字典序排序，然后通过轮询的方式逐个将分区一次分配给每个消费者。
-- sticky
+- **RangeAssignor 范围分配**  分区尽可能平均的分配给所有的消费者。
+- **RoundRobinAssignor(轮询分配)** 将消费者组内所有主题的分区按照字典序排序，然后通过轮询的方式逐个将分区一次分配给每个消费者。
+- **Stricky(粘性分配)**
 
 **sticky**分配策略是从0.11.x版本开始引入的分配策略，它主要有两个目的：
 
@@ -72,7 +150,7 @@ kafka新版本提供了三种rebalance分区分配策略：
 
 
 
-集群部署和测试：
+## 集群部署和测试：
 
 Kafka使用ZooKeeper管理集群，ZooKeeper用于协调服务器或集群拓扑，ZooKeeper是配置信息的一致性文件系统。
 
@@ -96,17 +174,25 @@ C 表示的是这个服务器与集群中的 Leader 服务器交换信息的端�
 
  
 
+新版本Kafka内置了zookeeper
+
 Kafka集群，在本机上开放三个端口搭建Kafka集群
 
 9097 9098 9099三个端口
 
 在Kafka配置文件里，设置zookeeper的连接
 
-zookeeper.connect=localhost:2181,localhost:2182,localhost:2183
+**zookeeper.connect**=localhost:2181,localhost:2182,localhost:2183
 
 这三个端口是zookeeper客户端连接的端口号
 
- 
+
+
+若是自己单独配置zookeeper,
+
+ ![image-20220526112139027](Kafka面经/image-20220526112139027.png)
+
+
 
 kafka学习
 
@@ -114,7 +200,7 @@ https://gitbook.cn/books/5ae1e77197c22f130e67ec4e/index.html
 
 
 
-## Kafka
+## Kafka介绍
 
 http://blog.itpub.net/31077337/viewspace-2185691/
 
@@ -154,21 +240,53 @@ Kafka集群最大可同时存在10,100或1,000个服务器。Kafka将每个parti
 
 https://www.cnblogs.com/06080410z/p/15349784.html 讲得挺细的
 
-## 为什么需要消息队列 （MO）
+
+
+## Kafka特点
+
+**高吞吐量、低延迟 高容错率 高可用** 
+
+Kafka 每秒可以处理几十万条消息，它的延迟最低只有几毫秒。每个 topic 可以分多个 Partition，Consumer Group 对 Partition 进行消费操作，提高负载均衡能力和消费能力。
+
+
+
+高吞吐量 可以做集群 存储分片  topic 分区做负载，提高Kafka的吞吐量
+
+低延迟 取数据快 不是随机 读取 顺序读取的 零拷贝 网络io
+
+高容错率 配合zookeeper  可以做集群 某个节点挂了 可以选举 leader follower
+
+
+
+## 为什么需要消息队列 （MQ）
 
 主要原因是由于在高并发环境下，同步请求来不及处理，请求往往会发生阻塞。比如大量的请求并发访问数据库，导致行锁表锁，最后请求线程会堆积过多， 从而触发 too many connection 错误， 引发雪崩效应。
 
-我们使用消息队列，通过异步处理请求，从而缓解系统的压力。消息队列常应用于异步处理，流量削峰，应用解耦，消息通讯等场景当前比较常见的 MQ 中间件有 ActiveMQ、RabbitMQ、RocketMQ、Kafka 等。
+我们使用消息队列，通过异步处理请求，从而缓解系统的压力。消息队列常应用于**异步处理，流量削峰，应用解耦，消息通讯**等场景当前比较常见的 MQ 中间件有 ActiveMQ、RabbitMQ、RocketMQ、Kafka 等。
 
 
 
-异步
+## 使用消息队列的好处
 
-削峰
+（1）解耦
 
-解耦
+允许你独立的扩展或修改两边的处理过程， 只要确保它们遵守同样的接口约束。
 
- 
+（2）可恢复性
+
+系统的一部分组件失效时，不会影响到整个系统。消息队列降低了进程间的耦合度，所以即使一个处理消息的进程挂掉，加入队列中的消息仍然可 以在系统恢复后被处理。
+
+（3）缓冲
+
+有助于控制和优化数据流经过系统的速度，解决生产消息和消费消息的处理速度不一致的情况。
+
+（4）灵活性 & 峰值处理能力
+
+在访问量剧增的情况下， 应用仍然需要继续发挥作用，但是这样的突发流量并不常见。 如果为以能处理这类峰值访问为标准来投入资源随时待命无疑是巨大的浪费。 使用消息队列能够使关键组件顶住突发的访问压力， 而不会因为突发的超负荷的请求而完全崩溃。
+
+（5）异步通信很多时候，用户不想也不需要立即处理消息。消息队列提供了异步处理机制， 允许用户把一个消息放入队列， 但并不立即处理它。 想向队列中放入多少消息就放多少，然后在需要的时候再去处理它们。
+
+
 
 消息队列的两种模式
 
@@ -189,20 +307,6 @@ Kafka 是最初由 Linkedin 公司开发，是一个分布式、支持分区的�
 它的最大的特性就是可以实时的处理大量数据以满足各种需求场景，比如基于 hadoop的批处理系统、低延迟的实时系统、Spark/Flink 流式处理引擎，nginx 访问日志，消息服务等等，用 scala 语言编写， Linkedin 于 2010 年贡献给了 Apache 基金会并成为顶级开源项目。
 
  
-
-## Kafka的特点
-
-**高吞吐量、低延迟 高容错率 高可用** 
-
-Kafka 每秒可以处理几十万条消息，它的延迟最低只有几毫秒。每个 topic 可以分多个 Partition，Consumer Group 对 Partition 进行消费操作，提高负载均衡能力和消费能力。
-
-
-
-高吞吐量 可以做集群 存储分片  topic 分区做负载，提高Kafka的吞吐量
-
-低延迟 取数据快 不是随机 读取 顺序读取的 零拷贝 网络io
-
-高容错率 配合zookeeper  可以做集群 某个节点挂了 可以选举 leader follower
 
 
 
@@ -325,6 +429,8 @@ producer在向Kafka写入消息的时候，可以设置参数来确定是否确�
 
 ## 为什么要用Kafka   技术选型
 
+## 不同消息队列的对比
+
 https://zhuanlan.zhihu.com/p/60288391
 
 https://blog.csdn.net/yunfeng482/article/details/72856762
@@ -335,7 +441,7 @@ https://blog.csdn.net/yunfeng482/article/details/72856762
 
 
 
-Kafka
+- Kafka
 
 scala语言 高吞吐量 单机10万级并发 写入性能高 毫秒级别
 
@@ -345,7 +451,7 @@ scala语言 高吞吐量 单机10万级并发 写入性能高 毫秒级别
 
 
 
-RabbitMQ
+- RabbitMQ
 
 erlang语言 单机万级吞吐量  RabbitMQ确实吞吐量会低一些
 
@@ -353,7 +459,7 @@ erlang语言 单机万级吞吐量  RabbitMQ确实吞吐量会低一些
 
 
 
-RocketMQ
+- RocketMQ
 
 RocketMQ整合了Kafka和RabbitMQ的优点，例如较高的吞吐量和通过参数配置能够做到消息绝对不丢失。
 
@@ -370,6 +476,8 @@ RocketMQ提供的丰富的功能。例如延迟消息、事务消息、消息回
 延迟消息:
 
 延迟消息是指生产者发送消息发送消息后，不能立刻被消费者消费，需要等待指定的时间后才可以被消费。
+
+
 
 延迟队列：
 
@@ -390,8 +498,6 @@ RocketMQ提供的丰富的功能。例如延迟消息、事务消息、消息回
 死信队列:
 
 死信队列用于处理无法被正常消费的消息。当一条消息初次消费失败，消息队列会自动进行消息重试；达到最大重试次数后，若消费依然失败，则表明消费者在正常情况下无法正确地消费该消息，此时，消息队列 不会立刻将消息丢弃，而是将其发送到该消费者对应的特殊队列中。
-
-
 
 
 
@@ -471,9 +577,7 @@ https://www.nowcoder.com/discuss/809261?type=all&order=recall&pos=&page=0&ncTrac
 
 
 
- 
-
-kafka如何做到发送端和接收端的顺序一致性？
+## kafka如何做到发送端和接收端的顺序一致性？
 
 发送端只保证了partition级别的顺序一致性，不保证topic级别的顺序。可以指定key值让相同key的数据到同一个partition保证顺序一致性。
 
@@ -484,8 +588,6 @@ kafka如何做到发送端和接收端的顺序一致性？
  
 
 零拷贝的实现原理，省略了哪一次上下文切换？（这个也是netty经常会问到的问题）
-
-
 
 
 
@@ -513,7 +615,7 @@ kafka 集群经过良好的调优，数据直接写入 os cache 中，然后读�
 
  
 
-**kafka 消费支持几种消费模式?**
+## kafka 消费支持几种消费模式?
 
  最多/最少/恰好消费一次
 
@@ -529,7 +631,7 @@ kafka 默认的模式是 at least once ，但这种模式可能会产生重复�
 
 
 
-**kafka 如何保证数据的不重复和不丢失？**
+## kafka 如何保证数据的不重复和不丢失？
 
 exactly once 模式 精确传递一次。将 offset 作为唯一 id 与消息同时处理，并且保证处理的原子性。消息只会处理一次，不丢失也不会重复。但这种方式很难做到。 
 
@@ -539,7 +641,7 @@ kafka 默认的模式是 at least once ，但这种模式可能会产生重复�
 
 
 
-**kafka 是如何清理过期数据的？**
+## kafka 是如何清理过期数据的？
 
 kafka 将数据持久化到了硬盘上，允许你配置一定的策略对数据清理，清理的策略有两个，删除和压缩。
 
@@ -601,7 +703,6 @@ broker 级别：关闭不完全的 Leader 选举，即 unclean.leader.election.e
 
 
 
-
 [参考](https://cloud.tencent.com/developer/article/1790732)
 
 由于Kafka集群依赖zookeeper集群，所以最简单最直观的方案是，所有Follower 
@@ -658,7 +759,7 @@ Kafka的Leader Election方案解决了上述问题，它在所有broker中选出
 
 
 
-**数据一致性的保证**
+## 数据一致性的保证
 
 一些概念
 
@@ -819,8 +920,3 @@ Raft增加了如下两条限制以保证安全性：
 这个保证是在RequestVote RPC中做的，Candidate在发送RequestVote RPC时，要带上自己的最后一条日志的term和log index，其他节点收到消息时，如果发现自己的日志比请求中携带的更新，则拒绝投票。日志比较的原则是，如果本地的最后一条log entry的term更大，则term大的更新，如果term一样大，则log index更大的更新。
 
 - Leader只能推进commit index来提交当前term的已经复制到大多数服务器上的日志，旧term日志的提交要等到提交当前term的日志来间接提交。
-
-
-
-
-

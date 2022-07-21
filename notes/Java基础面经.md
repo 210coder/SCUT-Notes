@@ -1,3 +1,7 @@
+1.1[Java特点](#Java特点)
+
+
+
 ## Java特点
 
 - 面向对象（封装 继承 多态）
@@ -333,6 +337,8 @@ boolean 1个字节
 
 
 
+## Java关键字
+
 ## Native关键字
 
 Java平台有个用户和本地C代码进行互操作的API，称为Java Native Interface (Java本地接口)。允许Java代码和其他语言写的代码进行交互
@@ -367,9 +373,46 @@ Java平台有个用户和本地C代码进行互操作的API，称为Java Native 
 
 
 
+## Java五种创建对象
+
+- new对象
+
+使用 new 关键字调用对象的构造器；
+
+- 使用 Java 反射的 newInstance() 方法
+
+利用反射的机制，可以使用 Class 类的 newInstance 方法创建对象。这个 newInstance 方法调用无参的构造函数创建对象；
+
+- 使用 Constructor 类的 newInstance 方法
+
+利用反射的机制，和 Class 类的 newInstance 方法很像， java.lang.reflect.Constructor 类里也有一个 newInstance 方法可以创建对象。我们可以通过这个 newInstance 方法调用有参数的和私有的构造函数；
+
+- 使用 clone 方法
+
+使用 Object 类的 clone() 方法；
+
+- 使用反序列化
+
+使用对象流 ObjectInputStream 的 readObject() 方法读取序列化对象；
 
 
-## 泛型 ？？
+
+## 泛型 
+
+把类型明确的工作推迟到创建对象或调用方法的时候才去明确的特殊的类型
+
+- Java 泛型（Generics）是 JDK 5 中引入的一个新特性。
+  使用泛型参数，可以增强代码的可读性以及稳定性。编译器可以对泛型参数进行检测，并且通过泛型参数可以指定传入的对象类型。
+
+- 比如 ArrayList<Persion> persons = new ArrayList<String>() 这行代码就指明了该ArrayList 对象只能传入 Persion 对象，如果传入其他类型的对象就会报错。
+- 可以用于构建泛型集合。原生 List 返回类型是 Object ，需要手动转换类型才能使用，使用泛型后编译器自动转换。
+
+
+
+**泛型提供了编译时类型安全检测机制**，该机制允许程序员在编译时检测到非法的类型。泛型的本质是参数化类型，也就是说所操作的数据类型被指定为一个参数。
+引入泛型的原因：**可以增强代码的复用性**，当然这种限定死类型的方式也会使得代码的安全性和可读性更高。
+
+**三种使用方式**
 
 泛型类
 
@@ -379,39 +422,52 @@ Java平台有个用户和本地C代码进行互操作的API，称为Java Native 
 
 
 
-## 反射 ？？补充 特斯拉问道
+## Java反射机制
 
-通过反射你可以获取任意一个类的所有属性和方法，你还可以调用这些方法和属性。
-
-**注解** 的实现也用到了反射
-
-Spring中
-
-`@Component`注解就声明了一个类为 Spring Bean
-
-`@Value`注解就读取到配置文件中的值
-
-这些都是因为你可以基于反射分析类，然后获取到类/属性/方法/方法的参数上的注解。你获取到注解之后，就可以做进一步的处理。
+​	java反射机制是在运行状态中，对于任意一个类，都能够知道这个类的所有属性和方法；对于任意一个对象，都能够调用它的任意一个方法和属性；这种动态获取的信息以及动态调用对象的方法的功能称为java语言的反射机制。
 
 
 
-###  获取 Class 对象的四种方式
+## 反射机制有什么用
 
-- **知道具体类的情况下可以使用：**
+ 通过java语言中的反射机制可以操作字节码文件（可以读和修改字节码文件。）
 
-- **通过 `Class.forName()`传入类的路径获取：**
+ 通过反射机制可以操作代码片段。（class 文件）
 
-- **通过对象实例`instance.getClass()`获取：**
 
-- **通过类加载器`ClassLoader.loadClass()`传入类路径获取:**
+
+## 反射机制相关的重要的类有哪些
+
+![image-20220525204348271](Java基础面经/image-20220525204348271.png)
+
+
+
+## Class类对象的三种实例化模式
+
+要操作一个类的字节码，需要首先获取到这个类的字节码，怎么获取java.lang.Class实例？
+
+![image-20220525203146652](Java基础面经/image-20220525203146652.png)
+
+
+
+## 通过反射实例化对象
+
+以上事例中可以看出除了getClass（）方法会实例化对象之外，其他的俩种不会产生实例化对象，所以取得Class类对象的一个最直接的好处就是通过**反射实例化对象**该方法为：**对象.newInstance()**
+
+```java
+对象.newInstance()
+```
+
+**注**：newInstance()方法内部实际上调用了**无参数构造方法**，必须保证无参构造存在才可以。
+否则会抛出`java.lang.InstantiationException`异常。
+
+![image-20220525204507499](Java基础面经/image-20220525204507499.png)
 
 
 
 ## Java异常
 
 [链接](https://blog.csdn.net/ThinkWon/article/details/101681073)
-
-![types-of-exceptions-in-java](https://javaguide.cn/assets/img/types-of-exceptions-in-java.3508827e.png)
 
 - Trowable
 
@@ -449,8 +505,6 @@ Spring中
 - 非受检异常 可以不处理
 
 **该类异常包括运行时异常（RuntimeException极其子类)**
-
-
 
 
 

@@ -27,6 +27,7 @@ https://cloud.tencent.com/developer/article/1038547
 ## Runnable接口和Callable接口的区别：
 Runnable自 Java 1.0 以来一直存在，但Callable仅在 Java 1.5 中引入,目的就是为了来处理Runnable不支持的用例。Runnable 接口 不会返回结果或抛出检查异常，但是 Callable 接口 可以。所以，如果任务不需要返回结果或抛出异常推荐使用 Runnable 接口 ，这样代码看起来会更加简洁。
 Runnable.java
+
 ```java
 @FunctionalInterface
 public interface Runnable {
@@ -57,7 +58,7 @@ public interface Callable<V> {
 ## 线程的生命周期和状态
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/img_convert/b33c720241f98e681e220f80be8df380.png#pic_center)
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/img_convert/8c15000f714bb39c2ec67673ac6f89a6.png#pic_center)
-由上图可以看出：线程创建之后它将处于 NEW（新建） 状态，调用 start() 方法后开始运行，线程这时候处于 READY（可运行） 状态。可运行状态的线程获得了 CPU 时间片（timeslice）后就处于 RUNNING（运行） 状态。
+由上图可以看出：线程创建之后它将处于 NEW（新建） 状态，调用 start() 方法后开始运行，线程这时候处于 READY（就绪） 状态。可运行状态的线程获得了 CPU 时间片（timeslice）后就处于 RUNNING（运行） 状态。
 在操作系统中层面线程有 READY 和 RUNNING 状态，而在 JVM 层面只能看到 RUNNABLE 状态，所以 Java 系统一般将这两个状态统称为 **RUNNABLE**（运行中） 状态 。
 
 当线程执行 wait()方法之后，线程进入 **WAITING**（等待） 状态。进入等待状态的线程需要依靠其他线程的通知才能够返回到运行状态，而 **TIMED_WAITING**(超时等待) 状态相当于在等待状态的基础上增加了超时限制，比如通过 sleep（long millis）方法或 wait（long millis）方法可以将 Java 线程置于 **TIMED_WAITING** 状态。当超时时间到达后 Java 线程将会返回到 **RUNNABLE** 状态。当线程调用同步方法时，在没有获取到锁的情况下，线程将会进入到 **BLOCKED**（阻塞） 状态。线程在执行 Runnable 的run()方法之后将会进入到 **TERMINATED**（终止） 状态。
@@ -237,7 +238,7 @@ synchronized为重量级锁, 线程的阻塞和唤醒需要操作系统用户态
 **Synchronized锁升级的过程。 主要步骤是：**
 
 - 先是通过偏向锁来获取锁，解决了虽然有同步但无竞争的场景下锁的消耗。
-- 再是通过对象头的Mark Word来实现的轻量级锁，通过轻量级锁如果还有竞争，那么继续升级。
+- 再是**通过对象头的Mark Word**来实现的轻量级锁，通过轻量级锁如果还有竞争，那么继续升级。
 - 升级为自旋锁，如果达到最大自旋次数了，那么就直接升级为重量级锁，所有未获取锁的线程都阻塞等待。
 
 
@@ -284,7 +285,7 @@ JDK1.6 对锁的实现引入了大量的优化，锁粗化、锁消除、锁升�
 
 2. **轻量级锁**
 
-多个线程竞争同步资源时，没有获取资源的线程自旋等待锁释放，不会阻塞
+多个线程竞争同步资源时，**没有获取资源的线程自旋等待锁释放，不会阻塞**
 
 轻量级锁考虑的是竞争锁对象的线程不多，持有锁时间也不长的场景。
 
@@ -304,7 +305,7 @@ JDK1.6 对锁的实现引入了大量的优化，锁粗化、锁消除、锁升�
 
 4. **重量级锁**
 
-多个线程竞争同步资源时，没有获取资源的线程阻塞等待被唤醒
+多个线程竞争同步资源时，**没有获取资源的线程阻塞等待被唤醒**
 
 当自旋超过一定的次数，或者一个线程在持有锁，一个在自旋，又有第三个来访时，轻量级锁升级为重量级锁。
 
@@ -330,7 +331,7 @@ https://mp.weixin.qq.com/s?__biz=MjM5NjQ5MTI5OA==&mid=2651749434&idx=3&sn=5ffa63
 
 **乐观锁**
 
-总是假设最好的情况，每次去拿数据的时候都认为别人不会修改，所以不会上锁，但是在更新的时候会判断一下在此期间别人有没有去更新这个数据，可以**使用版本号机制和CAS算法**实现。**乐观锁适用于多读的应用类型，这样可以提高吞吐量**，像数据库提供的类似于**write_condition机制**，其实都是提供的乐观锁。在Java中`java.util.concurrent.atomic`包下面的原子变量类就是使用了乐观锁的一种实现方式**CAS**实现的。
+总是假设最好的情况，每次去拿数据的时候都认为别人不会修改，所以不会上锁，但是在更新的时候会判断一下在此期间别人有没有去更新这个数据，可以**使用版本号机制和CAS算法**实现。**乐观锁适用于多读的应用类型，这样可以提高吞吐量**，像数据库提供的类似于**write_condition机制**，其实都是提供的乐观锁。在Java中`java.util.concurrent.atomic`包下面的**原子变量类**就是使用了乐观锁的一种实现方式**CAS**实现的。
 
 **乐观锁适用于多读少写**
 
@@ -378,7 +379,6 @@ boolean compareAndSwapLong(Object obj, long valueOffset, long expect, long updat
 
 3. **只能保证一个共享变量的原子操作**
 - 对一个共享变量执行操作时，CAS能够保证原子操作，但是对多个共享变量操作时，CAS是无法保证操作的原子性的。
-  
 - Java从1.5开始JDK提供了AtomicReference类来保证引用对象之间的原子性，可以把多个变量放在一个对象里来进行CAS操作。
 
 
@@ -486,7 +486,7 @@ ReetrantLock**获取锁失败**后（说明已经有线程获取锁了 可能是
 加锁：
 
 - 通过ReentrantLock的加锁方法Lock进行加锁操作。
-- 会调用到内部类Sync的Lock方法，由于Sync#lock是抽象方法，根据ReentrantLock初始化选择的公平锁和非公平锁，执行相关内部类的Lock方法，本质上都会执行AQS的Acquire方法。
+- 会调用到内部类Sync的Lock方法，由于Sync#lock是抽象方法，根据ReentrantLock初始化选择的公平锁和非公平锁，执行相关内部类的Lock方法，本质上都会执行AQS的Acquire方法。 
 - AQS的Acquire方法会执行tryAcquire方法，但是由于tryAcquire需要自定义同步器实现，因此执行了ReentrantLock中的tryAcquire方法，由于ReentrantLock是通过公平锁和非公平锁内部类实现的tryAcquire方法，因此会根据锁类型不同，执行不同的tryAcquire。
 - tryAcquire是获取锁逻辑，获取失败后，会执行框架AQS的后续逻辑，跟ReentrantLock自定义同步器无关。
 
@@ -714,9 +714,9 @@ https://tech.meituan.com/2020/04/02/java-pooling-pratice-in-meituan.html
 ​		所有任务的调度都是由execute方法完成的，这部分完成的工作是：检查现在线程池的运行状态、运行线程数、运行策略，决定接下来执行的流程，是直接申请线程执行，或是缓冲到队列中执行，亦或是直接拒绝该任务。其执行过程如下：
 
 1. 首先检测线程池运行状态，如果不是RUNNING，则直接拒绝，线程池要保证在RUNNING的状态下执行任务。
-2. 如果workerCount < corePoolSize，则创建并启动一个线程来执行新提交的任务。
+2. 如果workerCount < corePoolSize，则创建并启动一个线程来执行新提交的任务（ 执行这一步骤需要获取全局锁 )。
 3. 如果workerCount >= corePoolSize，且线程池内的阻塞队列未满，则将任务添加到该阻塞队列中。
-4. 如果workerCount >= corePoolSize && workerCount < maximumPoolSize，且线程池内的阻塞队列已满，则创建并启动一个线程来执行新提交的任务。
+4. 如果workerCount >= corePoolSize && workerCount < maximumPoolSize，且线程池内的阻塞队列已满，则创建并启动一个线程来执行新提交的任务（ 执行这一步骤需要获取全局锁 )。
 5. 如果workerCount >= maximumPoolSize，并且线程池内的阻塞队列已满, 则根据拒绝策略来处理该任务, 默认的处理方式是拒绝并抛出异常（四种拒绝）
 
 
@@ -1116,6 +1116,8 @@ Java是一种面向对象的语言，而Java对象在JVM中的存储也是有一
 ## 泛型
 
 **泛型的本质是为了参数化类型（在不创建新的类型的情况下，通过泛型指定的不同类型来控制形参具体限制的类型）**。也就是说在泛型使用过程中，操作的数据类型被指定为一个参数，这种参数类型可以用在类、接口和方法中，分别被称为泛型类、泛型接口、泛型方法。
+
+
 
 ## 类加载
 

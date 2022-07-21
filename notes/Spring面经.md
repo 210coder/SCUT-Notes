@@ -272,8 +272,3 @@ Bean类依赖外部类时，可以在Bean类内部声明该依赖类，并提供
 在Spring中，所有的Bean都是由BeanFactory(也就是IOC容器)来进行管理的。但对FactoryBean而言，这个Bean不是简单的Bean，而是一个能生产或者修饰对象生成的工厂Bean,它的实现与设计模式中的工厂模式和修饰器模式类似
 
 ![image-20220525112339956](Spring面经/image-20220525112339956.png)
-
-
-
-
-
