@@ -12,7 +12,18 @@ SpringBoot应运而生.
 
 
 
-## SpringBoot核心
+## SpringBoot特性
+
+能够快速创建基于spring的程序
+能够直接使用Java main方法启动内嵌的Tomcat服务器运行springboot程序，不需要部署war包
+提供约定的starter POM来简化Maven配置，让Maven的配置变得简单
+自动化配置，根据项目的Maven依赖配置，springboot自动配置spring、springmvc等
+提供了程序的健康检查功能
+基本可以完全不使用xml配合文件，采用注解配置
+
+
+
+## SpringBoot 四大核心
 
 Spring将很多魔法带入了Spring应用程序的开发之中，其中最重要的是以下四个核心。
 

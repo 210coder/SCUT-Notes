@@ -56,8 +56,10 @@ public interface Callable<V> {
 并行： 单位时间内，多个任务同时执行。
 
 ## 线程的生命周期和状态
-![在这里插入图片描述](https://img-blog.csdnimg.cn/img_convert/b33c720241f98e681e220f80be8df380.png#pic_center)
-![在这里插入图片描述](https://img-blog.csdnimg.cn/img_convert/8c15000f714bb39c2ec67673ac6f89a6.png#pic_center)
+
+![image-20220728110252956](java并发面经/image-20220728110252956.png)
+
+![image-20220728110328288](java并发面经/image-20220728110328288.png)
 由上图可以看出：线程创建之后它将处于 NEW（新建） 状态，调用 start() 方法后开始运行，线程这时候处于 READY（就绪） 状态。可运行状态的线程获得了 CPU 时间片（timeslice）后就处于 RUNNING（运行） 状态。
 在操作系统中层面线程有 READY 和 RUNNING 状态，而在 JVM 层面只能看到 RUNNABLE 状态，所以 Java 系统一般将这两个状态统称为 **RUNNABLE**（运行中） 状态 。
 
@@ -229,7 +231,7 @@ synchronized通过Monitor来实现线程同步，Monitor是依赖于底层的操
 
 ## JDK1.6后 synchronized 增加了锁的升级
 
- ![img](https://uploadfiles.nowcoder.com/images/20211117/34612537_1637132349942_552B7C2C7D899D6C4FD48728415A6077)
+ ![img](java并发面经/34612537_1637132349942_552B7C2C7D899D6C4FD48728415A6077)
 
 synchronized为重量级锁, 线程的阻塞和唤醒需要操作系统用户态和内核态的切换，耗费时间，所以锁的升级是为了尽量避免这种时间消耗。
 
@@ -447,7 +449,7 @@ ReentrantReadWriteLock有两把锁：ReadLock和WriteLock，ReadLock和WriteLock
 
 AQS state 字段 在独享锁中这个值通常是0或者1（如果是重入锁的话state值就是重入的次数），在ReentrantReadWriteLock整型变量state上分别描述读锁和写锁的数量，高16位表示读锁状态（读锁个数），低16位表示写锁状态（写锁个数）。
 
-![img](https://awps-assets.meituan.net/mit-x/blog-images-bundle-2018b/8793e00a.png)
+![img](java并发面经/8793e00a.png)
 
 读写锁才能实现读读的过程共享，而读写、写读、写写的过程互斥。
 
@@ -479,7 +481,7 @@ ReetrantLock**获取锁失败**后（说明已经有线程获取锁了 可能是
 
 如果此时state的值不为0  判断是否是本线程之前获得到了锁 如果是 更新state的值 表示重入次数（具体看代码）
 
-否则添加到AQS的阻塞队列里面
+否则添加到AQS的**阻塞队列**里面
 
 
 
@@ -503,7 +505,7 @@ ReetrantLock**获取锁失败**后（说明已经有线程获取锁了 可能是
 
 ReentrantLock加锁解锁时API层核心方法的映射关系
 
-![img](https://p0.meituan.net/travelcube/f30c631c8ebbf820d3e8fcb6eee3c0ef18748.png)
+![img](java并发面经/f30c631c8ebbf820d3e8fcb6eee3c0ef18748.png)
 
 
 
@@ -547,7 +549,7 @@ AQS并没有提供可用的tryAcquire方法，tryAcquire方法需要子类自己
 
 
 
-**非公平**指的是先尝试获取锁的线程并不一定首先获取该锁。当第一个线程A被放入AQS阻塞队列等待时，当线程B执行到代码1的时候发现state为0,就成功获得了锁，而比B先请求锁的线程A还在等待。
+**非公平**指的是先尝试获取锁的线程并不一定首先获取该锁。当第一个线程A被放入AQS阻塞队列等待时，当线程B执行到代码1的时候发现state为0,就成功获得了锁，而比B先请求锁的线程A还在等待
 
 
 
@@ -588,14 +590,14 @@ ReentrantLock是依赖AQS的，提供可中断等待、超时、尝试获取锁�
 
 
 ## 有哪几种方式实现线程安全
-volatile
+volatile 
 
-互斥 同步
-synchronized
+互斥 同步 
+synchronized 
 ReetrantLock 
 
-无同步
-ThreadLocal 本地副本
+无同步 
+ThreadLocal 本地副本 
 
 
 
@@ -701,7 +703,7 @@ ThreadLocals就是一个工具壳，它通过 set把value值放到当前线程�
 
 生命周期转换流程
 
-![图3 线程池生命周期](https://p0.meituan.net/travelcube/582d1606d57ff99aa0e5f8fc59c7819329028.png)****
+![图3 线程池生命周期](java并发面经/582d1606d57ff99aa0e5f8fc59c7819329028.png)****
 
 
 
@@ -710,6 +712,8 @@ ThreadLocals就是一个工具壳，它通过 set把value值放到当前线程�
 https://tech.meituan.com/2020/04/02/java-pooling-pratice-in-meituan.html
 
 ## 任务调度
+
+**线程池的工作流程要从它的执行方法 execute() 说起**
 
 ​		所有任务的调度都是由execute方法完成的，这部分完成的工作是：检查现在线程池的运行状态、运行线程数、运行策略，决定接下来执行的流程，是直接申请线程执行，或是缓冲到队列中执行，亦或是直接拒绝该任务。其执行过程如下：
 
@@ -816,6 +820,8 @@ https://www.cnblogs.com/jinggod/p/8490223.html
 
 6. ThreadFactory：创建线程的工厂
 
+   此参数一般用的比较少，我们通常在创建线程池时不指定此参数，它会使用默认的线程创建工厂的方法来创建线程。可以通过实现 ThreadFactory 接口来自定义一个线程工厂，这样就可以自定义线程的名称或线程执行的优先级了。
+
 7. RejectedExecutionHandler：拒绝策略
 
 - AbortPolicy：丢弃任务并抛出异常。
@@ -834,7 +840,7 @@ https://www.cnblogs.com/jinggod/p/8490223.html
 
 LinkedTransferQueue：一个由链表结构组成的无界阻塞队列。
 
-LinkedBlockingDeque：一个由链表结构组成的双向阻塞队列。
+LinkedBlocking**D**eque：一个由链表结构组成的双向阻塞队列。
 
 
 
@@ -883,7 +889,16 @@ Worker这个工作线程，实现了Runnable接口，并持有一个线程thread
 
 Worker是通过继承AQS，使用AQS来实现独占锁这个功能。
 
-增加线程是通过线程池中的addWorker方法，该方法的功能就是增加一个线程，addWorker方法有两个参数：firstTask、core。firstTask参数用于指定新增的线程执行的第一个任务，该参数可以为空；core参数为true表示在新增线程时会判断当前活动线程数是否少于corePoolSize，false表示新增线程前需要判断当前活动线程数是否少于maximumPoolSize.
+增加线程是通过线程池中的addWorker方法，该方法的功能就是增加一个线程，addWorker方法有两个参数：firstTask、core。firstTask参数用于指定新增的线程执行的第一个任务，该参数可以为空；core参数为true表示在新增线程时会判断当前活动线程数是否少于corePoolSize，false表示新增线程前需要判断当前活动线程数是否少于maximumPoolSize。
+
+
+
+**addWorker 代码 流程**
+
+1、获取线程池的控制状态，进行判断，不符合则返回false，符合则下一步
+2、死循环，判断workerCount是否大于上限，或者大于corePoolSize/maximumPoolSize，没有的话则对workerCount+1操作，
+3、如果不符合上述判断或+1操作失败，再次获取线程池的控制状态，获取runState与刚开始获取的runState相比，不一致则跳出内层循环继续外层循环，否则继续内层循环
+4、+1操作成功后，使用重入锁ReentrantLock来保证往workers当中添加worker实例，添加成功就启动该实例。
 
 
 
@@ -898,8 +913,6 @@ Worker是通过继承AQS，使用AQS来实现独占锁这个功能。
 **Worker线程执行任务**
 
 在Worker类中的run方法调用了runWorker方法来执行任务。
-
-
 
 
 
@@ -919,7 +932,7 @@ CountDownLatch countDownLatch = new CountDownLatch(2);
 countDownLatch.await();
 ```
 
-CountDownLatch相对于join方法的优点大致有两点：
+**CountDownLatch相对于join方法的优点大致有两点：**
 
 - 调用一个子线程的join方法后，该线程会一直阻塞直到子线程运行完毕，而CountDownLatch允许子线程运行完毕或在运行过程中递减计数器，也就是说await方法不一定要等到子线程运行结束才返回。
 - 使用线程池来管理线程一般都是直接添加Runnable到线程池，这时就没有办法再调用线程的join方法了，而仍可在子线程中递减计数器，也就是说CountDownLatch相比join方法可以更灵活地控制线程的同步。
@@ -1072,82 +1085,4 @@ A：**线程所在节点的状态会变成取消状态**，取消状态的节点
 Q：Lock函数通过Acquire方法进行加锁，但是具体是如何加锁的呢？
 
 A：AQS的Acquire会调用tryAcquire方法，tryAcquire由各个自定义同步器实现，通过tryAcquire完成加锁过程。
-
-
-
-
-
-# ConCurrentHashMap线程安全
-
-**摒弃了Segment的概念，并发控制使用 synchronized 和 CAS 来操作。**
-
-Hashtable 本身比较低效，因为它的实现基本就是将 put、get、size 等各种方法加上“synchronized”。简单来说，这就导致了所有并发操作都要竞争同一把锁，一个线程在进行同步操作时，其他线程只能等待，大大降低了并发操作的效率，比如线程使用了put操作，其他线程不能使用get操作。
-
-- 数据Entry存储key value利用 volatile 来保证可见性。
-- 使用 CAS 等操作，在特定场景进行无锁并发操作。
-- 使用 Unsafe、LongAdder 之类底层手段，进行极端情况的优化。
-
-
-
-## JVM内存结构 VS Java内存模型 VS Java对象模型]
-http://www.hollischuang.com/archives/2509
-
-## 讲一下JVM内存结构
-我们都知道，Java代码是要运行在虚拟机上的，而虚拟机在执行Java程序的过程中会把所管理的内存划分为若干个不同的数据区域，这些区域都有各自的用途。其中有些区域随着虚拟机进程的启动而存在，而有些区域则依赖用户线程的启动和结束而建立和销毁。在《Java虚拟机规范（Java SE 8）》中描述了JVM运行时内存区域结构如下：
-**总结，JVM内存结构，由Java虚拟机规范定义。描述的是Java程序执行过程中，由JVM管理的不同数据区域。各个区域有其特定的功能。**
-![在这里插入图片描述](https://img-blog.csdnimg.cn/4a3ab14b980b474e8984cb269acd3b7d.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_20,color_FFFFFF,t_70,g_se,x_16)
-
-
-
-
-
-## 讲一下 JMM(Java 内存模型 定义多线程 共享内存通信的模型)
-
-Java的多线程之间是通过共享内存进行通信的，而由于采用共享内存进行通信，在通信过程中会存在一系列如可见性、原子性、顺序性等问题，而JMM就是围绕着多线程通信以及与其相关的一系列特性而建立的模型。JMM定义了一些语法集，这些语法集映射到Java语言中就是volatile、synchronized等关键字。
-![在这里插入图片描述](https://img-blog.csdnimg.cn/18b0f23012134f3ab3ad1fb86c57aa50.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_14,color_FFFFFF,t_70,g_se,x_16)
-
-在 JDK1.2 之前，Java 的内存模型实现总是从主存（即共享内存）读取变量，是不需要进行特别的注意的。而在**当前的 Java 内存模型下**，线程可以把变量保存本地内存（比如机器的寄存器）中，而不是直接在主存中进行读写。这就可能造成一个线程在主存中修改了一个变量的值，而另外一个线程还继续使用它在寄存器中的变量值的拷贝，造成数据的不一致。
-**如果要解决这个问题，就需要把变量声明为 volatile**
-
-## Java对象模型
-Java是一种面向对象的语言，而Java对象在JVM中的存储也是有一定的结构的。而这个关于Java对象自身的存储模型称之为Java对象模型。
-
-
-## 泛型
-
-**泛型的本质是为了参数化类型（在不创建新的类型的情况下，通过泛型指定的不同类型来控制形参具体限制的类型）**。也就是说在泛型使用过程中，操作的数据类型被指定为一个参数，这种参数类型可以用在类、接口和方法中，分别被称为泛型类、泛型接口、泛型方法。
-
-
-
-## 类加载
-
-一个Java文件从编码完成到最终执行，一般主要包括两个过程
-
-- 编译
-
-- 运行
-
-编译，即把我们写好的java文件，通过javac命令编译成字节码，也就是我们常说的.class文件。
-
-运行，则是把编译声称的.class文件交给Java虚拟机(JVM)执行。
-
-而我们所说的类加载过程即是指JVM虚拟机把.class文件中类信息加载进内存，并进行解析生成对应的class对象的过程。
-
-举个通俗点的例子来说，JVM在执行某段代码时，遇到了class A， 然而此时内存中并没有class A的相关信息，于是JVM就会到相应的class文件中去寻找class A的类信息，并加载进内存中，这就是我们所说的类加载过程。
-
-由此可见，JVM不是一开始就把所有的类都加载进内存中，而是只有第一次遇到某个需要运行的类时才会加载，且只加载一次。
-
-## JIT 即时编译
-![在这里插入图片描述](https://img-blog.csdnimg.cn/52e0999b50d24fbb8f9ac1a3448828e1.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_11,color_FFFFFF,t_70,g_se,x_16)
-
-工作原理 
-当JIT编译启用时（默认是启用的），JVM读入.class文件解释后，将其发给JIT编译器。JIT编译器将字节码编译成本机机器代码。 
-
-通常javac将程序源码编译，转换成java字节码，JVM通过解释字节码将其翻译成相应的机器指令，逐条读入，逐条解释翻译。非常显然，经过解释运行，其运行速度必定会比可运行的二进制字节码程序慢。为了提高运行速度，引入了JIT技术。 
-
-在执行时JIT会把翻译过的机器码保存起来，已备下次使用，因此从理论上来说，採用该JIT技术能够，能够接近曾经纯编译技术。 
-
-使用该技术，可以加速java程序的运行速度。 
-
-
 

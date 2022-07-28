@@ -1,5 +1,5 @@
 ## 集合大体框架图
-![在这里插入图片描述](https://img-blog.csdnimg.cn/6aadb04079ba4f5c9de69f034fddd877.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_20,color_FFFFFF,t_70,g_se,x_16)
+![在这里插入图片描述](java容器面经/6aadb04079ba4f5c9de69f034fddd877.png)
 ## 集合的数据结构底层实现
 
 
@@ -32,10 +32,10 @@
 
 默认情况是按照插入顺序的,有个构造函数是指定按访问顺序的 LinkedHashMap(int initialCapacity, float loadFactor, boolean accessOrder) 
 
-- ![在这里插入图片描述](https://img-blog.csdnimg.cn/eee42043e7b14fa8b4d2fdc7ce92a3b0.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_19,color_FFFFFF,t_70,g_se,x_16)
+- ![在这里插入图片描述](java容器面经/eee42043e7b14fa8b4d2fdc7ce92a3b0.png)
 LinkHashMap如何实现有序的：
 在HashMap的基础上增加了一个双向链表，LinkedHashMap对Entry进行了扩展，增加了指针before和after。
-![在这里插入图片描述](https://img-blog.csdnimg.cn/4224e499d4164beea119756aa0ae8198.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_20,color_FFFFFF,t_70,g_se,x_16)
+![在这里插入图片描述](java容器面经/4224e499d4164beea119756aa0ae8198.png)
 
 - `Hashtable`： 数组+链表组成的，数组是 `Hashtable` 的主体，链表则是主要为了解决哈希冲突而存在的
 
@@ -234,7 +234,7 @@ https://www.sohu.com/a/519628232_121124376
 
 - 线程2也在扩容 阻塞时 指针T指向A  T.next = B 由于线程1已经让B->next = A   所以就会产生循环链表 A->B->A
 
-![img](https://p4.itc.cn/q_70/images03/20220128/1f2a1cae279141b496a30ce61e4fb434.png)
+![img](java容器面经/1f2a1cae279141b496a30ce61e4fb434.png)
 
 
 
@@ -401,7 +401,7 @@ JDK1.8的ConcurrentHashMap并发控制使用 `synchronized` 和 CAS 来操作，
 
 
 
-![JDK1.7的ConcurrentHashMap](https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-6/ConcurrentHashMap%E5%88%86%E6%AE%B5%E9%94%81.jpg)
+![JDK1.7的ConcurrentHashMap](java容器面经/ConcurrentHashMap分段锁.jpg)
 
 Hashtable使用 `synchronized` 来保证线程安全 ，用`synchronized` 同步get、put方法，全表锁锁住整个Hashtable，效率非常低下
 

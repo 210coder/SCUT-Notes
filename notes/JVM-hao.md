@@ -93,7 +93,7 @@ G1收集器采用标记-整理算法，局部采用复制算法
 
 将Java堆划分为多个大小相等的独立区域，虽然还保留新生代和老年代的概念，但新生代和老年代不再是物理隔离的了，而都是一部分Region（不需要连续）的集合。每一次都只有一个Region处于被分配的状态中，称为current region。G1收集器采用和CMS一样的TLABs的手段。即为每一个线程分配一个Buffer，县城分配内存就在这个Buffer内分配。但是当线程耗尽了自己的Buffer之后，需要申请新的Buffer。这个时候会带来并发的问题，G1收集器通过CAS操作来更新Top值
 
-![img](https://upload-images.jianshu.io/upload_images/2579123-edee235835bfb8ac.png?imageMogr2/auto-orient/strip|imageView2/2/w/476/format/webp)
+![img](JVM-hao/2579123-edee235835bfb8ac.png)
 
 ##### 建立可预测的时间模型
 
@@ -105,7 +105,7 @@ G1收集器有计划地避免在整个Java堆中进行全区域的垃圾收集�
 
 为了避免全堆扫描的发生，虚拟机为G1中每个Region维护了一个与之对应的Remembered Set。RS记录了其他Region对象引用本Region中对象的关系，属于points-into结构（谁引用了我的对象）。每个Region被分成了固定大小的若干Card，每个Card都用一个Byte来记录是否修改过，所以Card Table是一种point-out结构（我引用了谁的对象）。G1的RS是在Card Table的基础上实现的，其实是一个Hash Table，Key是别的Region的起始地址，Value是一个集合，里面的元素是Card Table的Index。
 
-![img](https://imgopt.infoq.com/fit-in/1200x2400/filters:quality(80)/filters:no_upscale()/articles/tuning-tips-G1-GC/en/resources/fig1.jpg)
+![img](JVM-hao/fig1.jpg)
 
 ##### Remembered Set的写屏障
 
@@ -162,7 +162,7 @@ G1提供了两种GC模式，Young GC和Mixed GC，两种都是完全Stop The Wor
 
 假设A扫描完，刚好C成为灰色，此时C->D的引用删除，同时A->D新增了引用（同时满足两个条件了吧），这样本来按照顺序接下来D应该会变成黑色(黑色对象不应该被清理)，但是由于C->D没有引用了，A已经成为了黑色对象，他不会再被重新扫描了，所以即便新增了A->D的引用，D也只能成为白色对象，最终被无情地清理：
 
-<img src="https://mmbiz.qpic.cn/mmbiz_jpg/ibBMVuDfkZUnx4xI9N05rkya7EYa7mt4klMWicg915knhf3Id9lI36ibh6TvVphib0IrfnoZyyUmKMVo5YI2rZSPbQ/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1" alt="图片" style="zoom: 33%;" />
+<img src="JVM-hao/640" alt="图片" style="zoom: 33%;" />
 
 解决这个问题的两种方案是**增量更新**和**原始快照**
 
@@ -232,4 +232,4 @@ ZGC是低延迟的，不分代的垃圾回收器，运行分为四个阶段：
 
 ### class文件结构
 
-![img](https://img2018.cnblogs.com/blog/1120165/201909/1120165-20190905081737355-432037429.png)
+![img](JVM-hao/1120165-20190905081737355-432037429.png)

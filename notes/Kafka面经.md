@@ -771,7 +771,7 @@ HW 所有副本中的最小LEO
 
 **kafka是通过HW（High Water Mark） 机制来保证数据的一致性。**
 
-![kafka的HW(High Watermark)机制](https://img-blog.csdnimg.cn/20200806150931935.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl8zODI0NjUxOA==,size_16,color_FFFFFF,t_70)
+![kafka的HW(High Watermark)机制](Kafka面经/20200806150931935.png)
 
 ##### 1. leader故障
 

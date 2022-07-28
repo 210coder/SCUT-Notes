@@ -88,7 +88,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
  * 题目描述：使用三个线程，一个线程打印 X，一个线程打印 Y，一个线程打印 Z，按顺序打印X，Y，Z，连续打印10次XYZ。
  *
- 
+
  * @Author wsc
 
  * 2021-09-13 21:23
@@ -187,9 +187,10 @@ public class Solution {
         });
         x.start();
         y.start();
-    z.start();
- }
- }
+        z.start();
+     
+     }
+      }
 
 第三种方法 ReetrantLock 
 可以参考这个
@@ -268,7 +269,7 @@ public class PrintXYZ1 {
                 }
             }
         });
-    
+        
         //Y线程
         Thread y = new Thread(new Runnable() {
             @Override
@@ -282,7 +283,7 @@ public class PrintXYZ1 {
                 }
             }
         });
-    
+        
         //Z线程
         Thread z = new Thread(new Runnable() {
             @Override
@@ -357,7 +358,7 @@ public class PrintXYZ2 {
                 e.printStackTrace();
             }
         },"printY");
-    
+        
         Thread z = new Thread(() -> {
             try {
                 for (int i = 0; i < 10; i++) {

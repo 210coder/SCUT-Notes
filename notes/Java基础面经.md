@@ -1,5 +1,3 @@
-1.1[Java特点](#Java特点)
-
 
 
 ## Java特点
@@ -49,7 +47,7 @@ jdk8
 
 **Java 程序从源代码到运行的过程如下图所示：**
 
-![Java程序转变为机器代码的过程](https://javaguide.cn/assets/img/java%E7%A8%8B%E5%BA%8F%E8%BD%AC%E5%8F%98%E4%B8%BA%E6%9C%BA%E5%99%A8%E4%BB%A3%E7%A0%81%E7%9A%84%E8%BF%87%E7%A8%8B.d35f4a19.png)
+![image-20220726160648648](Java基础面经/image-20220726160648648.png)
 
 - **.class->机器码** 过程
 
@@ -245,7 +243,7 @@ JDK1.7 之前运行时常量池逻辑包含字符串常量池存放在方法区�
 
 ![image-20220313220304529](Java基础面经/image-20220313220304529.png)
 
-![img](https://guide-blog-images.oss-cn-shenzhen.aliyuncs.com/java-guide-blog/%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%8B%BC%E6%8E%A5-%E5%B8%B8%E9%87%8F%E6%B1%A0.png)
+![img](Java基础面经/字符串拼接-常量池.png)
 
 字符串使用 `final` 关键字声明之后，可以让编译器当做常量来处理。
 
@@ -366,10 +364,81 @@ Java平台有个用户和本地C代码进行互操作的API，称为Java Native 
 阻止**实例中那些用此关键字修饰的的变量**序列化；当对象被反序列化时，被 `transient` 修饰的变量值不会被持久化和恢复。
 
 - `transient` **只能修饰变量**，不能修饰类和方法。
-
 - `transient` 修饰的变量，在反序列化后变量值将会被置成类型的默认值。例如，如果是修饰 `int` 类型，那么反序列后结果就是 `0`。
-
 - `static` 变量因为不属于任何对象(Object)，所以无论有没有 `transient` 关键字修饰，均不会被序列化。
+
+
+
+## Object类的方法和作用
+
+**`Object`中含有： 共十二个方法**
+
+**`registerNatives()、`**
+
+![image-20220727135911528](Java基础面经/image-20220727135911528.png)
+
+**`getClass()、**
+
+public final native Class getClass();
+
+
+
+这是一个 `public`的方法，我们可以直接通过对象调用。
+
+类加载的第一阶段类的加载就是将 `.class`文件加载到内存，并生成一个 `java.lang.Class`对象的过程。 `getClass()`方法就是获取这个对象，这是当前类的对象在运行时类的所有信息的集合。这个方法是反射三种方式之一。
+
+
+
+**`hashCode()、`**
+
+**`equals()、`**
+
+> 为什么需要重写 `equals`方法？
+
+**因为如果不重写equals方法，当将自定义对象放到 `map`或者 `set`中时**；如果这时两个对象的 `hashCode`相同，就会调用 `equals`方法进行比较，这个时候会调用 `Object`中默认的 `equals`方法，而默认的 `equals`方法只是比较了两个对象的引用是否指向了同一个对象，显然大多数时候都不会指向，这样就会将重复对象存入 `map`或者 `set`中。这就**破坏了 `map`与 `set`不能存储重复对象的特性，会造成内存溢出**。
+
+
+
+**`clone()、`**
+
+此方法返回当前对象的一个副本。
+
+这是一个 `protected`方法，提供给子类重写。但需要实现 `Cloneable`接口，这是一个标记接口，如果没有实现，当调用 `object.clone()`方法，会抛出 `CloneNotSupportedException`。
+
+`clone`的对象是一个新的对象；但原对象与 `clone`对象的 `String`类型的 `name`却是同一个引用，这表明， `super.clone`方法对成员变量如果是引用类型，进行是浅拷贝。
+
+> 那如果我们要进行深拷贝怎么办呢？ 
+>
+> **答案是**：如果成员变量是引用类型，想实现深拷贝，则成员变量也要实现 `Cloneable`接口，重写 `clone`方法。
+
+
+
+**`toString()、`**
+
+**`notify()、`**
+
+**`notifyAll()、`**
+
+**`wait(long)、`**
+
+**`wait(long,int)、`**
+
+**`wait()、`**
+
+这三个方法是用来线程间通信用的，作用是阻塞当前线程，等待其他线程调用 `notify()/notifyAll()`方法将其唤醒。这些方法都是 `publicfinal`的，不可被重写。
+
+
+
+**`finalize()` **。
+
+此方法是在垃圾回收之前，JVM会调用此方法来清理资源。此方法可能会将对象重新置为可达状态，导致JVM无法进行垃圾回收。
+
+**`finalize()`方法具有如下4个特点：**
+
+1. 永远不要主动调用某个对象的 `finalize()`方法，该方法由垃圾回收机制自己调用；
+2. `finalize()`何时被调用，是否被调用具有不确定性；
+3. 当 `JVM`执行可恢复对象的 `finalize()`可能会将此对象重新变为可达状态；
+4. 当 `JVM`执行 `finalize()`方法时出现异常，垃圾回收机制不会报告异常，程序继续执行。
 
 
 
@@ -442,7 +511,7 @@ Java平台有个用户和本地C代码进行互操作的API，称为Java Native 
 
 
 
-## Class类对象的三种实例化模式
+## 获取Class类对象的三种实例化模式
 
 要操作一个类的字节码，需要首先获取到这个类的字节码，怎么获取java.lang.Class实例？
 
@@ -531,7 +600,7 @@ input.close();
 - InputStream/Reader: 所有的输入流的基类，前者是字节输入流，后者是字符输入流。
 - OutputStream/Writer: 所有输出流的基类，前者是字节输出流，后者是字符输出流。
 
-![IO-操作方式分类](https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-6/IO-%E6%93%8D%E4%BD%9C%E6%96%B9%E5%BC%8F%E5%88%86%E7%B1%BB.png)
+![IO-操作方式分类](Java基础面经/IO-操作方式分类.png)
 
 
 

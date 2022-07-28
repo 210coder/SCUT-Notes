@@ -192,7 +192,7 @@ table属性是一个**数组**，数组中的每个元素都指向一个dictEntr
 
 
 
-![img](https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/beba612e-dc5b-4fc2-869d-0b23408ac90a.png)
+![img](Redis面经/beba612e-dc5b-4fc2-869d-0b23408ac90a.png)
 
 
 
@@ -247,7 +247,7 @@ Redis 基于 Reactor 模式开发了自己的网络事件模型，使用 I/O 多
 - 文件事件分派器（将 socket 关联到相应的事件处理器）
 - 事件处理器（连接应答处理器、命令请求处理器、命令回复处理器）
 
-![img](https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/9ea86eb5-000a-4281-b948-7b567bd6f1d8.png)
+![img](Redis面经/9ea86eb5-000a-4281-b948-7b567bd6f1d8.png)
 
 **Redis 通过IO 多路复用程序 来监听来自客户端的大量连接（或者说是监听多个 socket），它会将感兴趣的事件及类型（读、写）注册到内核中并监听每个事件是否发生。**
 
@@ -650,7 +650,7 @@ Memcached 过期数据的删除策略只用了惰性删除，而 Redis 同时使
 
 数据一致性问题
 
-![图片](https://mmbiz.qpic.cn/mmbiz_jpg/gB9Yvac5K3OezNCibL5S9oyeYqJBQVZCo8ic8WbuqDQcJ2bVyia7t9rOu9CGyJnCkWQs16WNibAwdV0GbH3q0K6ZMw/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![图片](Redis面经/640)
 
 - 写请求依旧只写数据库
 - 读请求先读缓存，如果缓存不存在，则从数据库读取，并重建缓存
@@ -684,14 +684,14 @@ Memcached 过期数据的删除策略只用了惰性删除，而 Redis 同时使
 [链接](https://segmentfault.com/a/1190000039078249)
 
 ​	**3）先删除缓存，后更新数据库**
-![在这里插入图片描述](https://img-blog.csdnimg.cn/474c3938769244b8bcf7f796227cbdd7.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_20,color_FFFFFF,t_70,g_se,x_16)
+![在这里插入图片描述](Redis面经/474c3938769244b8bcf7f796227cbdd7.png)
 就会产生数据库和 Redis 数据不一致
 解决办法 **延时双删的策略**
-![在这里插入图片描述](https://img-blog.csdnimg.cn/832d008749f14aaea7c9a43f45d54f71.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_20,color_FFFFFF,t_70,g_se,x_16)
+![在这里插入图片描述](Redis面经/832d008749f14aaea7c9a43f45d54f71.png)
 但是上述的保证事务提交完以后再进行删除缓存还有一个问题，就是如果你使用的是 Mysql 的读写分离的架构的话，那么其实主从同步之间也会有时间差。
 
 此时的解决办法就是如果是对 Redis 进行填充数据的查询数据库操作，那么就强制将其指向主库进行查询。
-![在这里插入图片描述](https://img-blog.csdnimg.cn/fcea64f2bc734192982b8ea55a55ea99.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_20,color_FFFFFF,t_70,g_se,x_16)
+![在这里插入图片描述](Redis面经/fcea64f2bc734192982b8ea55a55ea99.png)
 
 **4）先更新数据库，后删除缓存**
 这一种情况也会出现问题，比如更新数据库成功了，但是在删除缓存的阶段出错了没有删除成功，那么此时再读取缓存的时候每次都是错误的数据了。
@@ -699,12 +699,12 @@ Memcached 过期数据的删除策略只用了惰性删除，而 Redis 同时使
 
 
 解决方案就是利用消息队列进行删除的补偿
-![在这里插入图片描述](https://img-blog.csdnimg.cn/2d4a99f33a024ba199a6be6aa6df22cc.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_20,color_FFFFFF,t_70,g_se,x_16)
+![在这里插入图片描述](Redis面经/2d4a99f33a024ba199a6be6aa6df22cc.png)
 这个方案会有一个缺点就是会对**业务代码**造成大量的侵入，深深的耦合在一起，所以这时会有一个优化的方案，我们知道对 Mysql 数据库更新操作后再 binlog 日志中我们都能够找到相应的操作，那么我们可以**订阅 Mysql 数据库的 binlog 日志**对缓存进行操作。
 
 拿 MySQL 举例，当一条数据发生修改时，MySQL 就会产生一条变更日志（Binlog），我们可以订阅这个日志，拿到具体操作的数据，然后再根据这条数据，去删除对应的缓存。
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/3cb18a49f2df4357b791f298bed59664.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5Y2O5Y2X5bCP5ZOl,size_17,color_FFFFFF,t_70,g_se,x_16)
+![在这里插入图片描述](Redis面经/3cb18a49f2df4357b791f298bed59664.png)
 
 
 

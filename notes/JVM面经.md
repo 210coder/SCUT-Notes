@@ -174,11 +174,11 @@ Person p = new Person("zhangsan",20);
 8，将内存地址付给栈内存中的p变量
 
 Java中创建对象的内存图
-![Java中创建对象的内存图_内存地址_02](https://s7.51cto.com/images/blog/202109/28/48c1739b5732f675fc01403e0144707f.png?x-oss-process=image/watermark,size_16,text_QDUxQ1RP5Y2a5a6i,color_FFFFFF,t_100,g_se,x_10,y_10,shadow_90,type_ZmFuZ3poZW5naGVpdGk=)
+![Java中创建对象的内存图_内存地址_02](JVM面经/48c1739b5732f675fc01403e0144707f.png)
 
 
 
-![Java中创建对象的内存图_.net_03](https://s5.51cto.com/images/blog/202109/28/fc992e9d315ba1e02940e2772df7dc42.png?x-oss-process=image/watermark,size_16,text_QDUxQ1RP5Y2a5a6i,color_FFFFFF,t_100,g_se,x_10,y_10,shadow_90,type_ZmFuZ3poZW5naGVpdGk=)
+![Java中创建对象的内存图_.net_03](JVM面经/fc992e9d315ba1e02940e2772df7dc42.png)
 
 
 
@@ -272,7 +272,7 @@ Java中创建对象的内存图
 
 一个类的完整生命周期如下：
 
-![img](https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-11/%E7%B1%BB%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B-%E5%AE%8C%E5%96%84.png)
+![img](JVM面经/类加载过程-完善.png)
 
 
 
@@ -282,7 +282,7 @@ Java中创建对象的内存图
 
 系统加载 Class 类型的文件主要三步：**加载->连接->初始化**。连接过程又可分为三步：**验证->准备->解析**。
 
-![img](https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-6/%E7%B1%BB%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B.png)
+![img](JVM面经/类加载过程.png)
 
 
 
