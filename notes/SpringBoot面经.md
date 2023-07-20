@@ -174,8 +174,19 @@ https://www.nowcoder.com/discuss/958159?type=post&order=recall&pos=&page=0&ncTra
 **2.1. @Autowired**
 
 自动导入对象到类中，被注入进的类同样要被 Spring 容器管理比如：Service 类注入到 Controller 类中。
+@Bean是将没有的注入到spring容器中 @Autowired是将spring容器中已有的自动装配（组合）到另一个类中
 
 ![image-20220705111032010](SpringBoot面经/image-20220705111032010.png)
+
+**@Bean**
+
+- 作用： 用于将对象存入spring的ioc容器中，同@controller、@Service、@Component、@Configuration、@Repository等几个注解是一样的，都是负责将对象存入容器当中。只不过方式不同，他们是用在类上面的，然后将当前类通过无参构造函数创建对象然后放入容器，而@Bean是用在方法上，将当前方法的返回值对象放到容器当中！可以理解为前者是由spring自动创建对象，而@Bean创建对象是交给我们自己来控制。
+- 使用位置: @Bean一般出现在方法上面，也可用于自定义注解上。
+- 修饰的方法的位置： 使用@Bean修饰的方法，可以放在@controller、@Service、@Component、@Configuration、@Repository修饰的类当中，这样项目在启动的时候，@Bean方法返回的对象也会立马存入容器当中！放在启动类也是可以的哦！光通过@Bean是无法将对象放入容器当中的！
+对象名： 默认注入到容器当中的对象id（有的也叫做名称）是方法名，但是如果需要显式命名，则可以在注解上使用 name 属性（或其别名{value}）。比如：@Bean(name = "名称")或者@Bean("名称")，当然也可以有多个名称@Bean(name = { "dataSource1", "dataSource2", "dataSource3" })
+所属： @Bean属于spring当中的注解，在spring-context包下，而并非springboot！
+- 对方法的要求： 可以使用static final修饰、但是有个前提方法一定要有返回值，否则启动报错！
+@controller、@Service、@Configuration、@Repository这四个注解其实都是@Component派生注解，点开源码就会发现，全是使用的@Component注解自定义的。其实spring整这几个注解就是为了方便我们分层，controller层用@controller，service用@Service，仅此而已！
 
 **2.2. Component,@Repository,@Service, @Controller** 
 
